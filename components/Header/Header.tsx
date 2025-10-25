@@ -1,30 +1,49 @@
-import React from 'react'
-import css from './Header.module.css'
-import Link from 'next/link'
-// import TagsMenu from "../TagsMenu/TagsMenu";
-import AuthNavigation from '../AuthNavigation/AuthNavigation'
+'use client'
 
-const Header = () => {
+import Link from 'next/link'
+import css from './Header.module.css'
+import AuthNavigation from '@/components/AuthNavigation/AuthNavigation'
+import { useUserStore } from '@/lib/store/authStore'
+
+export default function Header() {
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated)
+
   return (
     <header className={css.header}>
-      <Link href="/" aria-label="Home" className={css.headerLink}>
-        NoteHub
-      </Link>
-      <nav aria-label="Main Navigation">
-        <ul className={css.navigation}>
-          <li className={css.navigationItem}>
-            <Link href="/" className={css.navigationLink}>
-              Home
-            </Link>
-          </li>
-          <AuthNavigation />
-        </ul>
-      </nav>
+      <div className={css.headerInner}>
+        <Link
+          href="/"
+          aria-label="Home"
+          className={css.headerLink}
+          prefetch={false}
+        >
+          NoteHub
+        </Link>
+
+        <nav aria-label="Main Navigation" className={css.nav}>
+          <ul className={css.navigation}>
+            <li className={css.navigationItem}>
+              <Link href="/" className={css.navigationLink} prefetch={false}>
+                Home
+              </Link>
+            </li>
+
+            {isAuthenticated && (
+              <li className={css.navigationItem}>
+                <Link
+                  href="/notes/filter/all"
+                  className={css.navigationLink}
+                  prefetch={false}
+                >
+                  Notes
+                </Link>
+              </li>
+            )}
+
+            <AuthNavigation />
+          </ul>
+        </nav>
+      </div>
     </header>
   )
-}
-
-export default Header
-{
-  /* <TagsMenu /> */
 }

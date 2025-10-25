@@ -2,82 +2,53 @@
 
 import Link from 'next/link'
 import css from './AuthNavigation.module.css'
+import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/lib/store/authStore'
 import { logout } from '@/lib/api/clientApi'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 
-const AuthNavigation = () => {
+export default function AuthNavigation() {
   const router = useRouter()
-  const { user, isAuthenticated, clearUser, hydrated, setHydrated } =
-    useUserStore()
+
+  const user = useUserStore((state) => state.user)
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated)
+  const clearUser = useUserStore((state) => state.clearUser)
 
   const handleLogout = async () => {
-    try {
-      await logout()
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      clearUser()
-      router.push('/')
-    }
+    await logout()
+    clearUser()
+    router.replace('/sign-in')
   }
 
-  // ✅ Встановлюємо hydrated після першого рендеру
-  useEffect(() => {
-    setHydrated(true)
-  }, [setHydrated])
-
-  if (!hydrated) return <p className={css.loading}>Loading...</p>
+  if (!isAuthenticated || !user) {
+    return (
+      <>
+        <li className={css.navigationItem}>
+          <Link href="/sign-in" prefetch={false} className={css.navigationLink}>
+            Login
+          </Link>
+        </li>
+        <li className={css.navigationItem}>
+          <Link href="/sign-up" prefetch={false} className={css.navigationLink}>
+            Sign up
+          </Link>
+        </li>
+      </>
+    )
+  }
 
   return (
     <>
-      {isAuthenticated && user ? (
-        <>
-          <li className={css.navigationItem}>
-            <Link
-              href="/profile"
-              prefetch={false}
-              className={css.navigationLink}
-            >
-              Profile
-            </Link>
-          </li>
-          <li className={css.navigationItem}>
-            <p className={css.userEmail}>{user.email}</p>
-            <button
-              onClick={handleLogout}
-              className={css.logoutButton}
-              type="button"
-            >
-              Logout
-            </button>
-          </li>
-        </>
-      ) : (
-        <>
-          <li className={css.navigationItem}>
-            <Link
-              href="/sign-in"
-              prefetch={false}
-              className={css.navigationLink}
-            >
-              Login
-            </Link>
-          </li>
-          <li className={css.navigationItem}>
-            <Link
-              href="/sign-up"
-              prefetch={false}
-              className={css.navigationLink}
-            >
-              Sign up
-            </Link>
-          </li>
-        </>
-      )}
+      <li className={css.navigationItem}>
+        <Link href="/profile" prefetch={false} className={css.navigationLink}>
+          Profile
+        </Link>
+      </li>
+      <li className={css.navigationItem}>
+        <p className={css.userEmail}>{user.email}</p>
+        <button className={css.logoutButton} onClick={handleLogout}>
+          Logout
+        </button>
+      </li>
     </>
   )
 }
-
-export default AuthNavigation

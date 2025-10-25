@@ -1,59 +1,62 @@
 'use client'
 
-import css from './SignInPage.module.css'
-import React, { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { login, getMe } from '@/lib/api/clientApi'
+import css from './SignInPage.module.css'
+import { login, getMe, checkSession } from '@/lib/api/clientApi'
 import { useUserStore } from '@/lib/store/authStore'
 
 export default function SignInPage() {
   const router = useRouter()
-  const { user, setUser, hydrated } = useUserStore()
+
+  const user = useUserStore((state) => state.user)
+  const setUser = useUserStore((state) => state.setUser)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (user && hydrated) {
-      router.push('/profile')
+    if (user) {
+      router.replace('/profile')
     }
-  }, [user, hydrated, router])
+  }, [user, router])
 
-  const handleSubmit = async (formData: FormData) => {
-    setLoading(true)
-    setError('')
+  const handleSubmit = useCallback(
+    async (formData: FormData) => {
+      setLoading(true)
+      setError('')
 
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+      try {
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
 
-    if (!email || !password) {
-      setError("Email і пароль обов'язкові")
-      setLoading(false)
-      return
-    }
+        await login({ email, password })
 
-    try {
-      await login({ email, password })
-      const currentUser = await getMe()
+        let currentUser = await checkSession()
+        if (!currentUser) {
+          currentUser = await getMe()
+        }
 
-      if (currentUser) setUser(currentUser)
-      else setError('Не вдалося отримати користувача')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Сталася помилка')
-    } finally {
-      setLoading(false)
-    }
-  }
+        if (!currentUser) {
+          setError('Failed to load user data')
+          setLoading(false)
+          return
+        }
+
+        setUser(currentUser)
+        router.replace('/profile')
+      } catch {
+        setError('Login failed')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [router, setUser],
+  )
 
   return (
     <main className={css.mainContent}>
-      <form
-        className={css.form}
-        onSubmit={async (e) => {
-          e.preventDefault()
-          const formData = new FormData(e.currentTarget)
-          await handleSubmit(formData)
-        }}
-      >
+      <form className={css.form} action={handleSubmit}>
         <h1 className={css.formTitle}>Sign in</h1>
 
         <div className={css.formGroup}>

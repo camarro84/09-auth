@@ -1,31 +1,16 @@
 'use client'
 
-import { NoteDraft, NoteTag } from '@/types/note'
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import type { Note } from '@/types/note'
 
-type NoteDraftStore = {
-  draft: NoteDraft
-  setDraft: (note: NoteDraft) => void
-  clearDraft: () => void
+type NoteStoreState = {
+  notes: Note[]
+  setNotes: (notes: Note[]) => void
+  clear: () => void
 }
 
-const initialDraft = {
-  title: '',
-  content: '',
-  tag: NoteTag.Todo,
-}
-
-export const useNoteDraftStore = create<NoteDraftStore>()(
-  persist(
-    (set) => ({
-      draft: initialDraft,
-      setDraft: (note) => set(() => ({ draft: note })),
-      clearDraft: () => set(() => ({ draft: initialDraft })),
-    }),
-    {
-      name: 'note-draft',
-      partialize: (state) => ({ draft: state.draft }),
-    },
-  ),
-)
+export const useNoteStore = create<NoteStoreState>((set) => ({
+  notes: [],
+  setNotes: (notes: Note[]) => set({ notes }),
+  clear: () => set({ notes: [] }),
+}))

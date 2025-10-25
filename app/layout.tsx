@@ -10,25 +10,12 @@ const roboto = Roboto({
   subsets: ['latin'],
   weight: ['400', '700'],
   display: 'swap',
+  variable: '--font-roboto',
 })
 
 export const metadata: Metadata = {
-  title: 'Note Hub',
-  description: 'App for create/modify/delete notes',
-  openGraph: {
-    title: 'Note Hub',
-    description: 'App for create/modify/delete notes',
-    siteName: 'Note Hub',
-    images: [
-      {
-        url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Notes logo',
-      },
-    ],
-    type: 'article',
-  },
+  title: 'NoteHub',
+  description: 'Note application',
 }
 
 export default function RootLayout({
@@ -40,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={roboto.className}>
+      <body className={roboto.variable} suppressHydrationWarning>
         <TanStackProvider>
           <AuthProvider>
             <Header />

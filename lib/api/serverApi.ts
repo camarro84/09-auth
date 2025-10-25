@@ -1,71 +1,88 @@
 import { cookies } from 'next/headers'
 import { api } from './api'
-import { User } from '@/types/user'
-import { Note, NoteListResponse } from '@/types/note'
+import type { User } from '@/types/user'
+import type { NoteListResponse, Note } from '@/types/note'
 
-// ================= HELPERS =================
-async function getAuthHeaders() {
-  const cookieStore = await cookies() // ✅ додаємо await
-  const accessToken = cookieStore.get('accessToken')?.value
-  const refreshToken = cookieStore.get('refreshToken')?.value
-
-  return {
-    Cookie: `accessToken=${accessToken ?? ''}; refreshToken=${refreshToken ?? ''}`,
-  }
+async function buildCookieHeader() {
+  const cookieStore = await cookies()
+  const all = cookieStore.getAll()
+  return all
+    .map(
+      ({ name, value }: { name: string; value: string }) => `${name}=${value}`,
+    )
+    .join('; ')
 }
 
-// ================= AUTH =================
-
-// Перевірка сесії через сервер
-export async function serverCheckSession(): Promise<User | null> {
+export async function checkSessionServer(): Promise<User | null> {
   try {
-    const headers = await getAuthHeaders()
-    const { data } = await api.get<User | null>('/auth/session', { headers })
-    return data
-  } catch {
-    return null
-  }
-}
+    const cookieHeader = await buildCookieHeader()
 
-// Отримати поточного користувача
-export async function serverGetMe(): Promise<User | null> {
-  try {
-    const headers = await getAuthHeaders()
-    const { data } = await api.get<User>('/users/me', { headers })
-    return data
-  } catch {
-    return null
-  }
-}
-
-// ================= NOTES =================
-
-// Отримати список нотаток з параметрами
-export async function serverFetchNotes(params?: {
-  search?: string
-  page?: number
-  tag?: string
-}): Promise<NoteListResponse | null> {
-  try {
-    const headers = await getAuthHeaders()
-    const { data } = await api.get<NoteListResponse>('/notes', {
-      headers,
-      params,
+    const res = await api.get<User | null>('/auth/session', {
+      headers: {
+        Cookie: cookieHeader,
+      },
+      withCredentials: true,
     })
-    return data
+
+    return res.data || null
   } catch {
     return null
   }
 }
 
-// Отримати нотатку за id
-export async function serverFetchNoteById(
-  noteId: string,
-): Promise<Note | null> {
+export async function getMeServer(): Promise<User | null> {
   try {
-    const headers = await getAuthHeaders()
-    const { data } = await api.get<Note>(`/notes/${noteId}`, { headers })
-    return data
+    const cookieHeader = await buildCookieHeader()
+
+    const res = await api.get<User>('/users/me', {
+      headers: {
+        Cookie: cookieHeader,
+      },
+      withCredentials: true,
+    })
+
+    return res.data
+  } catch {
+    return null
+  }
+}
+
+export async function fetchNotesServer(params?: {
+  page?: number
+  perPage?: number
+  search?: string
+  tag?: string
+}): Promise<NoteListResponse> {
+  const cookieHeader = await buildCookieHeader()
+
+  const res = await api.get<NoteListResponse>('/notes', {
+    headers: {
+      Cookie: cookieHeader,
+    },
+    withCredentials: true,
+    params: {
+      page: params?.page ?? 1,
+      perPage: params?.perPage ?? 12,
+      search: params?.search ?? '',
+      tag: params?.tag ?? '',
+    },
+  })
+
+  return res.data
+}
+
+export async function fetchNoteByIdServer(id: string): Promise<Note | null> {
+  try {
+    const cookieHeader = await buildCookieHeader()
+
+    const res = await api.get<Note>(`/notes/${id}`, {
+      headers: {
+        Cookie: cookieHeader,
+      },
+      withCredentials: true,
+    })
+
+    return res.data
   } catch {
     return null
   }
