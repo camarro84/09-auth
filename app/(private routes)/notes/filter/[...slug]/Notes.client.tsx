@@ -7,7 +7,6 @@ import type { NoteListResponse } from '@/types/note'
 import NoteList from '@/components/NoteList/NoteList'
 import Pagination from '@/components/Pagination/Pagination'
 import SearchBox from '@/components/SearchBox/SearchBox'
-import css from './NotesPage.module.css'
 
 type AllowedTag = 'Work' | 'Personal' | 'Meeting' | 'Shopping' | 'Todo'
 
@@ -37,29 +36,29 @@ export default function Notes({ tag }: Props) {
 
   if (isLoading) {
     return (
-      <section className={css.wrapper}>
-        <div className={css.topRow}>
+      <section>
+        <div>
           <SearchBox onSearch={handleSearch} />
         </div>
-        <p className={css.status}>Loading...</p>
+        <p>Loading...</p>
       </section>
     )
   }
 
   if (isError || !data) {
     return (
-      <section className={css.wrapper}>
-        <div className={css.topRow}>
+      <section>
+        <div>
           <SearchBox onSearch={handleSearch} />
         </div>
-        <p className={css.status}>Error loading notes</p>
+        <p>Error loading notes</p>
       </section>
     )
   }
 
   return (
-    <section className={css.wrapper}>
-      <div className={css.topRow}>
+    <section>
+      <div>
         <SearchBox onSearch={handleSearch} />
       </div>
 
