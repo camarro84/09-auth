@@ -1,25 +1,23 @@
 'use client'
-
-import Link from 'next/link'
+import React from 'react'
 import css from './SidebarNotes.module.css'
+import { TAGS } from '@/constants/tags'
+import Link from 'next/link'
 
-const TAGS = ['Work', 'Personal', 'Meeting', 'Shopping', 'Todo'] as const
-
-export default function SidebarNotes() {
+const SidebarNotes = () => {
   return (
-    <ul className={css.menuList}>
-      <li className={css.menuItem}>
-        <Link href="/notes/filter/all" className={css.menuLink}>
-          All notes
-        </Link>
-      </li>
-      {TAGS.map((tag) => (
-        <li key={tag} className={css.menuItem}>
-          <Link href={`/notes/filter/${tag}`} className={css.menuLink}>
-            {tag}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <nav>
+      <ul className={css.menuList}>
+        {TAGS.map((tag) => (
+          <li className={css.menuItem} key={tag}>
+            <Link href={`/notes/filter/${tag}`} className={css.menuLink}>
+              {tag}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   )
 }
+
+export default SidebarNotes

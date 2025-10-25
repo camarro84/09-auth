@@ -1,6 +1,8 @@
 import React from 'react'
 import css from './Header.module.css'
 import Link from 'next/link'
+// import TagsMenu from "../TagsMenu/TagsMenu";
+import AuthNavigation from '../AuthNavigation/AuthNavigation'
 
 const Header = () => {
   return (
@@ -15,11 +17,7 @@ const Header = () => {
               Home
             </Link>
           </li>
-          <li className={css.navigationItem}>
-            <Link href="/notes/filter/all" className={css.navigationLink}>
-              Notes
-            </Link>
-          </li>
+          <AuthNavigation />
         </ul>
       </nav>
     </header>
@@ -27,3 +25,6 @@ const Header = () => {
 }
 
 export default Header
+{
+  /* <TagsMenu /> */
+}

@@ -1,44 +1,33 @@
-'use client'
-
-import React, { useState, ChangeEvent } from 'react'
-import { useDebouncedCallback } from 'use-debounce'
+import React, { useState } from 'react'
 import css from './SearchBox.module.css'
+import { useDebouncedCallback } from 'use-debounce'
 
 type Props = {
-  onSearch?: (search: string) => void
-  onChange?: (v: string) => void
-  placeholder?: string
-  initialValue?: string
+  onSearch: (search: string) => void
 }
 
-const SearchBox = ({
-  onSearch,
-  onChange,
-  placeholder = 'Search notes',
-  initialValue = '',
-}: Props) => {
-  const [value, setValue] = useState(initialValue)
-  const fire = onSearch ?? onChange ?? (() => {})
+const SearchBox = ({ onSearch }: Props) => {
+  const [value, setValue] = useState('')
 
-  const debounced = useDebouncedCallback((val: string) => {
-    fire(val)
+  const debounced = useDebouncedCallback((value) => {
+    onSearch(value)
   }, 400)
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value.trim()
-    setValue(v)
-    debounced(v)
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value.trim())
+    debounced(e.target.value.trim())
   }
 
   return (
-    <input
-      type="text"
-      className={css.input}
-      value={value}
-      placeholder={placeholder}
-      onChange={handleChange}
-      aria-label="Search notes"
-    />
+    <>
+      <input
+        type="text"
+        className={css.input}
+        value={value}
+        placeholder="Search notes"
+        onChange={handleChange}
+      />
+    </>
   )
 }
 

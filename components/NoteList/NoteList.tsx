@@ -1,34 +1,34 @@
-'use client'
-
 import css from './NoteList.module.css'
-import Link from 'next/link'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { deleteNote } from '@/lib/api/api'
-import type { Note } from '@/types/note'
+import { Note } from '@/types/note'
+import Link from 'next/link'
 import Button from '../Button/Button'
+import { deleteNote } from '@/lib/api/clientApi'
 
-type Props = { notes?: Note[] }
+type Props = {
+  notes: Note[]
+}
 
-export default function NoteList({ notes = [] }: Props) {
+const NoteList = ({ notes }: Props) => {
   const queryClient = useQueryClient()
-  const mutation = useMutation<Note, unknown, string>({
-    mutationFn: (noteId) => deleteNote({ noteId }),
+
+  // ⚡ Виправлена мутація — передаємо тільки рядок, як очікує deleteNote
+  const mutation = useMutation<void, unknown, string>({
+    mutationFn: (noteId: string) => deleteNote(noteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
     },
   })
 
-  if (!notes.length) return <p>No notes found.</p>
+  const handleDeleteNote = (noteId: string) => {
+    mutation.mutate(noteId)
+  }
 
   return (
     <ul className={css.list}>
       {notes.map((note) => (
         <li className={css.listItem} key={note.id}>
-          <Link
-            href={`/notes/${note.id}`}
-            className={css.content}
-            scroll={false}
-          >
+          <Link href={`/notes/${note.id}`} className={css.content}>
             <p className={css.title}>{note.title}</p>
           </Link>
           <div className={css.footer}>
@@ -36,7 +36,7 @@ export default function NoteList({ notes = [] }: Props) {
             <Button
               typeBtn="button"
               className={css.button}
-              onClick={() => mutation.mutate(note.id)}
+              onClick={() => handleDeleteNote(note.id)}
               value="Delete"
             />
           </div>
@@ -45,3 +45,5 @@ export default function NoteList({ notes = [] }: Props) {
     </ul>
   )
 }
+
+export default NoteList

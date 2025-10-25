@@ -1,42 +1,31 @@
 'use client'
 
+import { NoteDraft, NoteTag } from '@/types/note'
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
 
-export type DraftTag = 'Work' | 'Personal' | 'Meeting' | 'Shopping' | 'Todo'
-
-export type NoteDraft = {
-  title: string
-  content: string
-  tag: DraftTag
-}
-
-const initialDraft: NoteDraft = {
-  title: '',
-  content: '',
-  tag: 'Todo',
-}
-
-type Store = {
+type NoteDraftStore = {
   draft: NoteDraft
-  setDraft: (patch: Partial<NoteDraft>) => void
-  replaceDraft: (draft: NoteDraft) => void
+  setDraft: (note: NoteDraft) => void
   clearDraft: () => void
 }
 
-export const useNoteStore = create<Store>()(
+const initialDraft = {
+  title: '',
+  content: '',
+  tag: NoteTag.Todo,
+}
+
+export const useNoteDraftStore = create<NoteDraftStore>()(
   persist(
     (set) => ({
       draft: initialDraft,
-      setDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
-      replaceDraft: (draft) => set(() => ({ draft })),
+      setDraft: (note) => set(() => ({ draft: note })),
       clearDraft: () => set(() => ({ draft: initialDraft })),
     }),
     {
       name: 'note-draft',
-      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ draft: state.draft }),
-      version: 1,
     },
   ),
 )

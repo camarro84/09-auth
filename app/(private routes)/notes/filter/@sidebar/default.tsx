@@ -1,5 +1,11 @@
 import SidebarNotes from '@/components/SidebarNotes/SidebarNotes'
 
-export default function SidebarDefault() {
-  return <SidebarNotes />
+const NotesSidebar = async () => {
+  return (
+    <div>
+      <SidebarNotes />
+    </div>
+  )
 }
+
+export default NotesSidebar

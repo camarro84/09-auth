@@ -1,7 +1,14 @@
 'use client'
 
-import CreateNotePage from '@/components/CreateNote/CreateNotePage'
+import NoteForm from '@/components/NoteForm/NoteForm'
+import React from 'react'
 
-export default function CreateNote() {
-  return <CreateNotePage />
+const CreateNote = () => {
+  return (
+    <div>
+      <NoteForm />
+    </div>
+  )
 }
+
+export default CreateNote

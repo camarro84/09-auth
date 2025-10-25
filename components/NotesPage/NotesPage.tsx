@@ -1,48 +1,50 @@
 'use client'
 
-import SearchBox from '@/components/SearchBox/SearchBox'
-import Pagination from '@/components/Pagination/Pagination'
+import React, { ReactNode } from 'react'
+import Link from 'next/link'
+
 import css from './NotesPage.module.css'
-import type { NoteListResponse } from '@/types/note'
+import SearchBox from '../SearchBox/SearchBox'
+import Pagination from '../Pagination/Pagination'
+import LayoutNotes from '../LayoutNotes/LayoutNotes'
+import SidebarNotes from '../SidebarNotes/SidebarNotes'
+import { NoteListResponse } from '@/types/note'
 
 type Props = {
   data: NoteListResponse
-  currentPage: number // 0-based
-  onPageChange: (pageIndex: number) => void
-  onSearch: (v: string) => void
-  onOpenCreate: () => void
-  children: React.ReactNode
+  children: ReactNode
+  setPage: (page: number) => void
+  setSearch: (search: string) => void
+  currentPage: number
+  isFetching?: boolean
 }
 
-export default function NotesPage({
+const NotesPage = ({
   data,
-  currentPage,
-  onPageChange,
-  onSearch,
-  onOpenCreate,
   children,
-}: Props) {
+  setPage,
+  setSearch,
+  currentPage,
+  isFetching,
+}: Props) => {
   return (
     <div className={css.app}>
-      {/* ВЕРХНЯЯ ПАНЕЛЬ: поиск слева, кнопка справа */}
       <div className={css.toolbar}>
-        <SearchBox onSearch={onSearch} placeholder="Search notes..." />
-        <button className={css.button} onClick={onOpenCreate}>
+        <SearchBox onSearch={setSearch} />
+        <Pagination
+          totalPages={data.totalPages}
+          currentPage={currentPage}
+          onPageChange={setPage}
+        />
+        {isFetching && <span className={css.loading}>Loading...</span>}
+        <Link href="/notes/action/create" className={css.button}>
           Create note +
-        </button>
+        </Link>
       </div>
 
-      {/* ПАГИНАЦИЯ СВЕРХУ ПО ЦЕНТРУ */}
-      <Pagination
-        pageCount={data.totalPages}
-        currentPage={currentPage}
-        onPageChange={onPageChange}
-      />
-
-      <hr className={css.divider} />
-
-      {/* НИЖЕ — разметка со списком/контентом */}
-      {children}
+      <LayoutNotes sidebar={<SidebarNotes />}>{children}</LayoutNotes>
     </div>
   )
 }
+
+export default NotesPage

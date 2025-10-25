@@ -1,7 +1,7 @@
 'use client'
 
 type Props = {
-  error: Error
+  error: string
   value: string
 }
 
@@ -9,7 +9,7 @@ const Error = ({ error, value }: Props) => {
   return (
     <div className="content">
       <p>
-        Could not fetch{`${value}`}. {error.message}
+        Could not fetch {value}. {error}
       </p>
     </div>
   )

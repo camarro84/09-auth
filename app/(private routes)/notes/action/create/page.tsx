@@ -1,27 +1,33 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import CreateNote from './CreateNote.client'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+import React from 'react'
 
-export const metadata: Metadata = {
-  title: 'Create note — NoteHub',
-  description: 'Створіть нову нотатку у застосунку NoteHub.',
-  openGraph: {
-    title: 'Create note — NoteHub',
-    description: 'Сторінка створення нової нотатки.',
-    url: `${SITE_URL}/notes/action/create`,
-    images: [
-      {
-        url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'NoteHub OG image',
-      },
-    ],
-    type: 'website',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Create new note',
+    description: 'Add a new note to your collection',
+    openGraph: {
+      title: 'Create new note',
+      description: 'Add a new note to your collection',
+      siteName: 'NoteHub',
+      images: [
+        {
+          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+          width: 1200,
+          height: 630,
+          alt: `Notes for logo`,
+        },
+      ],
+      type: 'article',
+    },
+  }
 }
 
 export default function CreateNotePage() {
-  return <CreateNote />
+  return (
+    <div>
+      <CreateNote />
+    </div>
+  )
 }

@@ -1,131 +1,138 @@
 'use client'
 
+import React, { useState } from 'react'
 import css from './NoteForm.module.css'
+import Button from '../Button/Button'
+import { useQueryClient } from '@tanstack/react-query'
+
 import { useRouter } from 'next/navigation'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createNote } from '@/lib/api/api'
-import type { Note } from '@/types/note'
-import { useNoteStore } from '@/lib/store/noteStore'
-import type { DraftTag } from '@/lib/store/noteStore'
-import { useEffect, useRef } from 'react'
+import { useNoteDraftStore } from '@/lib/store/noteStore'
+import { NoteDraft, NoteTag } from '@/types/note'
+import { createNote } from '@/lib/api/clientApi'
 
-const TAGS = ['Work', 'Personal', 'Meeting', 'Shopping', 'Todo'] as const
-type TagUnion = (typeof TAGS)[number]
-
-function toTag(v: FormDataEntryValue | null): TagUnion {
-  const s = typeof v === 'string' ? v : ''
-  return (TAGS as readonly string[]).includes(s) ? (s as TagUnion) : 'Todo'
+type Props = {
+  onSuccess?: () => void
+  onClose?: () => void
 }
 
-export default function NoteForm({ onCancel }: { onCancel?: () => void }) {
-  const router = useRouter()
+const NoteForm = ({ onSuccess, onClose }: Props) => {
   const queryClient = useQueryClient()
-  const { draft, setDraft, clearDraft } = useNoteStore()
+  const router = useRouter()
+  const { draft, setDraft, clearDraft } = useNoteDraftStore()
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
-  const titleRef = useRef<HTMLInputElement>(null)
-  const contentRef = useRef<HTMLTextAreaElement>(null)
-  const tagRef = useRef<HTMLSelectElement>(null)
+  const validateForm = (values: NoteDraft) => {
+    const newErrors: { [key: string]: string } = {}
+    if (!values.title) newErrors.title = 'Title is required'
+    if (!values.content) newErrors.content = 'Content is required'
+    if (!Object.values(NoteTag).includes(values.tag)) {
+      newErrors.tag = 'Invalid tag'
+    }
+    return newErrors
+  }
 
-  useEffect(() => {
-    if (titleRef.current) titleRef.current.value = draft.title
-    if (contentRef.current) contentRef.current.value = draft.content
-    if (tagRef.current) tagRef.current.value = draft.tag
-  }, [draft])
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target
+    setDraft({ ...draft, [name]: value })
+    setErrors((prev) => ({ ...prev, [name]: '' }))
+  }
 
-  const mutation = useMutation<
-    Note,
-    unknown,
-    { title: string; content: string; tag: TagUnion }
-  >({
-    mutationFn: (payload) => createNote(payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notes'] })
-      clearDraft()
-      router.back()
-    },
-  })
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const form = e.currentTarget
-    const formData = new FormData(form)
-
-    const title = (formData.get('title') as string).trim()
-    const content = (formData.get('content') as string).trim()
-    const tag = toTag(formData.get('tag'))
-
-    if (!title) return
-
-    const payload: { title: string; content: string; tag: TagUnion } = {
-      title,
-      content,
-      tag,
+  const handleSubmit = async (formData: FormData) => {
+    const values: NoteDraft = {
+      title: formData.get('title') as string,
+      content: formData.get('content') as string,
+      tag: formData.get('tag') as NoteTag,
     }
 
-    mutation.mutate(payload)
+    const validationErrors = validateForm(values)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+
+    try {
+      await createNote(values)
+      await queryClient.invalidateQueries({ queryKey: ['notes'] })
+      clearDraft()
+      onSuccess?.()
+      router.back()
+    } catch (err) {
+      console.error('Error creating note:', err)
+      setErrors({ form: 'Failed to create note. Please try again.' })
+    }
   }
 
   const handleCancel = () => {
-    if (onCancel) onCancel()
-    router.back()
+    clearDraft()
+    if (onClose) {
+      onClose()
+    } else {
+      router.back()
+    }
   }
 
   return (
-    <form className={css.form} onSubmit={handleSubmit}>
-      <label className={css.label}>
-        <span className={css.labelTitle}>Title</span>
+    <form action={handleSubmit} className={css.form}>
+      <div className={css.formGroup}>
+        <label htmlFor="title">Title</label>
         <input
-          ref={titleRef}
-          className={css.input}
-          type="text"
+          id="title"
           name="title"
-          placeholder="Enter title"
-          defaultValue={draft.title}
-          onChange={(e) => setDraft({ title: e.target.value })}
+          type="text"
+          defaultValue={draft?.title}
+          onChange={handleChange}
+          className={css.input}
         />
-      </label>
+        {errors.title && <div className={css.error}>{errors.title}</div>}
+      </div>
 
-      <label className={css.label}>
-        <span className={css.labelTitle}>Content</span>
+      <div className={css.formGroup}>
+        <label htmlFor="content">Content</label>
         <textarea
-          ref={contentRef}
-          className={css.textarea}
+          id="content"
           name="content"
-          placeholder="Enter content"
-          defaultValue={draft.content}
-          onChange={(e) => setDraft({ content: e.target.value })}
+          defaultValue={draft?.content}
+          onChange={handleChange}
+          className={css.textarea}
         />
-      </label>
+        {errors.content && <div className={css.error}>{errors.content}</div>}
+      </div>
 
-      <label className={css.label}>
-        <span className={css.labelTitle}>Tag</span>
+      <div className={css.formGroup}>
+        <label htmlFor="tag">Tag</label>
         <select
-          ref={tagRef}
-          className={css.select}
+          id="tag"
           name="tag"
-          defaultValue={draft.tag}
-          onChange={(e) => setDraft({ tag: e.target.value as DraftTag })}
+          defaultValue={draft?.tag}
+          onChange={handleChange}
+          className={css.select}
         >
-          {TAGS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
+          <option value={NoteTag.Work}>Work</option>
+          <option value={NoteTag.Personal}>Personal</option>
+          <option value={NoteTag.Meeting}>Meeting</option>
+          <option value={NoteTag.Shopping}>Shopping</option>
+          <option value={NoteTag.Todo}>Todo</option>
         </select>
-      </label>
+        {errors.tag && <div className={css.error}>{errors.tag}</div>}
+      </div>
 
-      <div className={css.actions}>
-        <button
-          className={css.submit}
-          type="submit"
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? 'Saving...' : 'Create note'}
-        </button>
-        <button className={css.cancel} type="button" onClick={handleCancel}>
-          Cancel
-        </button>
+      {errors.form && <div className={css.error}>{errors.form}</div>}
+
+      <div className={css.btnGroup}>
+        <Button
+          typeBtn="button"
+          className={css.cancelButton}
+          value="Cancel"
+          onClick={handleCancel}
+        />
+        <Button typeBtn="submit" className={css.submitButton} value="Create" />
       </div>
     </form>
   )
 }
+
+export default NoteForm

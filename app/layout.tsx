@@ -1,39 +1,34 @@
-import './globals.css'
 import type { Metadata } from 'next'
+import { Roboto } from 'next/font/google'
+import './globals.css'
 import Header from '@/components/Header/Header'
 import Footer from '@/components/Footer/Footer'
 import TanStackProvider from '@/components/TanStackProvider/TanStackProvider'
-import { Roboto } from 'next/font/google'
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+import AuthProvider from '@/components/AuthProvider/AuthProvider'
 
 const roboto = Roboto({
-  weight: ['400', '700'],
   subsets: ['latin'],
-  variable: '--font-roboto',
+  weight: ['400', '700'],
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'NoteHub',
-  description:
-    'NoteHub — простий та швидкий застосунок для нотаток з фільтрами та пошуком.',
+  title: 'Note Hub',
+  description: 'App for create/modify/delete notes',
   openGraph: {
-    title: 'NoteHub',
-    description:
-      'Зберігайте та знаходьте нотатки миттєво. Фільтри, пошук, перегляд деталей.',
-    url: SITE_URL,
+    title: 'Note Hub',
+    description: 'App for create/modify/delete notes',
+    siteName: 'Note Hub',
     images: [
       {
         url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
         width: 1200,
         height: 630,
-        alt: 'NoteHub OG image',
+        alt: 'Notes logo',
       },
     ],
-    type: 'website',
+    type: 'article',
   },
-  metadataBase: new URL(SITE_URL),
 }
 
 export default function RootLayout({
@@ -45,12 +40,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={roboto.variable} suppressHydrationWarning>
+      <body className={roboto.className}>
         <TanStackProvider>
-          <Header />
-          {children}
-          {modal}
-          <Footer />
+          <AuthProvider>
+            <Header />
+            {children}
+            {modal}
+            <Footer />
+          </AuthProvider>
         </TanStackProvider>
       </body>
     </html>

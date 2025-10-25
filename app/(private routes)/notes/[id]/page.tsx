@@ -1,60 +1,36 @@
-import {
-  HydrationBoundary,
-  QueryClient,
-  dehydrate,
-} from '@tanstack/react-query'
-import { fetchNoteById } from '@/lib/api/api'
-import NoteDetails from './NoteDetails.client'
-import type { Metadata } from 'next'
+import NoteModal from '@/app/@modal/(.)notes/[id]/page'
+import { fetchNoteById } from '@/lib/api/clientApi'
 
-type Props = { params: Promise<{ id: string }> }
+import { Metadata } from 'next'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+type Props = {
+  params: { id: string }
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params
-  try {
-    const note = await fetchNoteById({ noteId: id })
-    const title = `${note.title} — NoteHub`
-    const description = note.content?.slice(0, 140) || 'Деталі нотатки.'
-    const url = `${SITE_URL}/notes/${id}`
-    return {
-      title,
-      description,
-      openGraph: {
-        title,
-        description,
-        url,
-        images: [
-          {
-            url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-            width: 1200,
-            height: 630,
-            alt: 'NoteHub OG image',
-          },
-        ],
-        type: 'article',
-      },
-    }
-  } catch {
-    return {
-      title: 'Note — NoteHub',
-      description: 'Деталі нотатки.',
-    }
+  const { id } = params // ⚡ просто деструктуруємо
+  const note = await fetchNoteById(id) // ⚡ передаємо рядок, а не об’єкт
+
+  return {
+    title: `Note ${note.title}`,
+    description: note.content.slice(0, 30),
+    openGraph: {
+      title: `Note ${note.title}`,
+      description: note.content.slice(0, 30),
+      siteName: 'NoteHub',
+      images: [
+        {
+          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
+          width: 1200,
+          height: 630,
+          alt: note.title,
+        },
+      ],
+      type: 'article',
+    },
   }
 }
 
-export default async function Page({ params }: Props) {
-  const { id } = await params
-  const queryClient = new QueryClient()
-  await queryClient.prefetchQuery({
-    queryKey: ['note', id],
-    queryFn: () => fetchNoteById({ noteId: id }),
-  })
-  const dehydratedState = dehydrate(queryClient)
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <NoteDetails id={id} />
-    </HydrationBoundary>
-  )
+export default function NotesPage({ params }: Props) {
+  return <NoteModal params={params} />
 }

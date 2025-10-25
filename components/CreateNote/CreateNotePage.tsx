@@ -1,9 +1,11 @@
 'use client'
 
-import css from './CreateNote.module.css'
-import NoteForm from '@/components/NoteForm/NoteForm'
+import React from 'react'
+import css from '@/components/CreateNote/CreateNote.module.css'
+import NoteForm from '../NoteForm/NoteForm'
 
-export default function CreateNotePage() {
+const CreateNotePage = () => {
+  console.log('🚀 ~ css:', css)
   return (
     <main className={css.main}>
       <div className={css.container}>
@@ -13,3 +15,5 @@ export default function CreateNotePage() {
     </main>
   )
 }
+
+export default CreateNotePage

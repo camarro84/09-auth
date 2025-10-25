@@ -7,6 +7,20 @@ export type Note = {
   tag: string
 }
 
+export enum NoteTag {
+  Work = 'Work',
+  Personal = 'Personal',
+  Meeting = 'Meeting',
+  Shopping = 'Shopping',
+  Todo = 'Todo',
+}
+
+export type NoteDraft = {
+  title: string
+  content: string
+  tag: NoteTag
+}
+
 export type NoteListResponse = {
   notes: Note[]
   totalPages: number
