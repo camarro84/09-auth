@@ -6,7 +6,7 @@ import AuthNavigation from '@/components/AuthNavigation/AuthNavigation'
 import { useUserStore } from '@/lib/store/authStore'
 
 export default function Header() {
-  const isAuthenticated = useUserStore((state) => state.isAuthenticated)
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated)
 
   return (
     <header className={css.header}>
@@ -20,7 +20,7 @@ export default function Header() {
           NoteHub
         </Link>
 
-        <nav aria-label="Main Navigation" className={css.nav}>
+        <nav aria-label="Main Navigation">
           <ul className={css.navigation}>
             <li className={css.navigationItem}>
               <Link href="/" className={css.navigationLink} prefetch={false}>
@@ -31,7 +31,7 @@ export default function Header() {
             {isAuthenticated && (
               <li className={css.navigationItem}>
                 <Link
-                  href="/notes/filter/all"
+                  href="/notes"
                   className={css.navigationLink}
                   prefetch={false}
                 >

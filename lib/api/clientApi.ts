@@ -1,45 +1,48 @@
-import axios from 'axios'
+import { api } from './api'
 import type { User } from '@/types/user'
-import type { NoteListResponse, Note } from '@/types/note'
+import type { Note, NoteListResponse } from '@/types/note'
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL + '/api',
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-export async function register(data: {
-  username: string
+export type AuthCredentials = {
   email: string
   password: string
-}) {
-  const res = await api.post('/auth/register', data)
+}
+
+export type RegisterData = {
+  email: string
+  password: string
+  username: string
+}
+
+export async function register(data: RegisterData): Promise<User> {
+  const res = await api.post<User>('/auth/register', data)
   return res.data
 }
 
-export async function login(data: { email: string; password: string }) {
-  const res = await api.post('/auth/login', data)
+export async function login(data: AuthCredentials): Promise<User> {
+  const res = await api.post<User>('/auth/login', data)
   return res.data
 }
 
-export async function logout() {
-  const res = await api.post('/auth/logout')
-  return res.data
+export async function logout(): Promise<void> {
+  await api.post('/auth/logout')
 }
 
 export async function checkSession(): Promise<User | null> {
   const res = await api.get<User | null>('/auth/session')
-  return res.data || null
+  return res.data ?? null
 }
 
-export async function getMe(): Promise<User | null> {
+export async function getMe(): Promise<User> {
   const res = await api.get<User>('/users/me')
   return res.data
 }
 
-export async function fetchNotes(params?: {
+export async function updateMe(payload: { username: string }): Promise<User> {
+  const res = await api.patch<User>('/users/me', payload)
+  return res.data
+}
+
+export async function fetchNotes(params: {
   page?: number
   perPage?: number
   search?: string
@@ -66,5 +69,3 @@ export async function createNote(data: {
 export async function deleteNote(id: string): Promise<void> {
   await api.delete(`/notes/${id}`)
 }
-
-export { api }

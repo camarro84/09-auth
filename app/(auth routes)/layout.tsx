@@ -1,8 +1,7 @@
-type Props = {
+export default function AuthRoutesLayout({
+  children,
+}: {
   children: React.ReactNode
+}) {
+  return <>{children}</>
 }
-const NotesLayout = ({ children }: Props) => {
-  return <section>{children}</section>
-}
-
-export default NotesLayout

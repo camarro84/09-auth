@@ -1,50 +1,32 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import css from './SignInPage.module.css'
-import { login, getMe, checkSession } from '@/lib/api/clientApi'
+import { login } from '@/lib/api/clientApi'
 import { useUserStore } from '@/lib/store/authStore'
 
 export default function SignInPage() {
   const router = useRouter()
-
-  const user = useUserStore((state) => state.user)
-  const setUser = useUserStore((state) => state.setUser)
+  const setUser = useUserStore((s) => s.setUser)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (user) {
-      router.replace('/profile')
-    }
-  }, [user, router])
-
-  const handleSubmit = useCallback(
-    async (formData: FormData) => {
-      setLoading(true)
+  const onSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
       setError('')
+      setLoading(true)
+
+      const formData = new FormData(e.currentTarget)
+      const email = String(formData.get('email') || '').trim()
+      const password = String(formData.get('password') || '').trim()
 
       try {
-        const email = formData.get('email') as string
-        const password = formData.get('password') as string
-
-        await login({ email, password })
-
-        let currentUser = await checkSession()
-        if (!currentUser) {
-          currentUser = await getMe()
-        }
-
-        if (!currentUser) {
-          setError('Failed to load user data')
-          setLoading(false)
-          return
-        }
-
-        setUser(currentUser)
-        router.replace('/profile')
+        const user = await login({ email, password })
+        setUser(user)
+        router.push('/profile')
       } catch {
         setError('Login failed')
       } finally {
@@ -56,7 +38,7 @@ export default function SignInPage() {
 
   return (
     <main className={css.mainContent}>
-      <form className={css.form} action={handleSubmit}>
+      <form className={css.form} onSubmit={onSubmit}>
         <h1 className={css.formTitle}>Sign in</h1>
 
         <div className={css.formGroup}>

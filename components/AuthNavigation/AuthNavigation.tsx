@@ -8,15 +8,17 @@ import { logout } from '@/lib/api/clientApi'
 
 export default function AuthNavigation() {
   const router = useRouter()
+  const user = useUserStore((s) => s.user)
+  const isAuthenticated = useUserStore((s) => s.isAuthenticated)
+  const clearUser = useUserStore((s) => s.clearUser)
 
-  const user = useUserStore((state) => state.user)
-  const isAuthenticated = useUserStore((state) => state.isAuthenticated)
-  const clearUser = useUserStore((state) => state.clearUser)
-
-  const handleLogout = async () => {
-    await logout()
-    clearUser()
-    router.replace('/sign-in')
+  async function handleLogout() {
+    try {
+      await logout()
+    } finally {
+      clearUser()
+      router.push('/sign-in')
+    }
   }
 
   if (!isAuthenticated || !user) {
@@ -27,6 +29,7 @@ export default function AuthNavigation() {
             Login
           </Link>
         </li>
+
         <li className={css.navigationItem}>
           <Link href="/sign-up" prefetch={false} className={css.navigationLink}>
             Sign up
@@ -43,6 +46,7 @@ export default function AuthNavigation() {
           Profile
         </Link>
       </li>
+
       <li className={css.navigationItem}>
         <p className={css.userEmail}>{user.email}</p>
         <button className={css.logoutButton} onClick={handleLogout}>

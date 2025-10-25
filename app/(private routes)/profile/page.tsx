@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import css from './ProfilePage.module.css'
 import { checkSessionServer, getMeServer } from '@/lib/api/serverApi'
 
@@ -8,30 +9,25 @@ export const metadata = {
 }
 
 export default async function ProfilePage() {
-  const me = (await checkSessionServer()) || (await getMeServer())
+  const rawUser =
+    (await checkSessionServer()) || (await getMeServer()) || null
 
-  if (!me) {
+  const user = rawUser && {
+    username: rawUser.username || 'your_username',
+    email: rawUser.email || 'your_email@example.com',
+    avatar:
+      rawUser.avatar ||
+      'https://ac.goit.global/fullstack/react/avatar-default.jpg',
+  }
+
+  if (!user) {
     return (
       <main className={css.mainContent}>
         <div className={css.profileCard}>
-          <div className={css.header}>
-            <h1 className={css.formTitle}>Profile Page</h1>
-          </div>
-
-          <div className={css.avatarWrapper}>
-            <Image
-              src="/default-avatar.png"
-              alt="User Avatar"
-              width={120}
-              height={120}
-              className={css.avatar}
-            />
-          </div>
-
-          <div className={css.profileInfo}>
-            <p>Username: —</p>
-            <p>Email: —</p>
-          </div>
+          <h1 className={css.formTitle}>You are not logged in</h1>
+          <Link href="/sign-in" className={css.editProfileButton}>
+            Go to Sign in
+          </Link>
         </div>
       </main>
     )
@@ -42,15 +38,14 @@ export default async function ProfilePage() {
       <div className={css.profileCard}>
         <div className={css.header}>
           <h1 className={css.formTitle}>Profile Page</h1>
-
-          <a href="/profile/edit" className={css.editProfileButton}>
+          <Link href="/profile/edit" className={css.editProfileButton}>
             Edit Profile
-          </a>
+          </Link>
         </div>
 
         <div className={css.avatarWrapper}>
           <Image
-            src={me.avatar}
+            src={user.avatar}
             alt="User Avatar"
             width={120}
             height={120}
@@ -59,8 +54,8 @@ export default async function ProfilePage() {
         </div>
 
         <div className={css.profileInfo}>
-          <p>Username: {me.username}</p>
-          <p>Email: {me.email}</p>
+          <p>Username: {user.username}</p>
+          <p>Email: {user.email}</p>
         </div>
       </div>
     </main>
