@@ -1,36 +1,28 @@
-import NoteModal from '@/app/@modal/(.)notes/[id]/page'
-import { fetchNoteById } from '@/lib/api/clientApi'
-
-import { Metadata } from 'next'
+import { fetchNoteByIdServer } from '@/lib/api/serverApi'
+import NoteDetails from '@/components/NoteDetails/NoteDetails'
 
 type Props = {
-  params: { id: string }
+  params: Promise<{
+    id: string
+  }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = params // ⚡ просто деструктуруємо
-  const note = await fetchNoteById(id) // ⚡ передаємо рядок, а не об’єкт
+export default async function NotePage({ params }: Props) {
+  const { id } = await params
 
-  return {
-    title: `Note ${note.title}`,
-    description: note.content.slice(0, 30),
-    openGraph: {
-      title: `Note ${note.title}`,
-      description: note.content.slice(0, 30),
-      siteName: 'NoteHub',
-      images: [
-        {
-          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-          width: 1200,
-          height: 630,
-          alt: note.title,
-        },
-      ],
-      type: 'article',
-    },
+  const note = await fetchNoteByIdServer(id)
+
+  if (!note) {
+    return (
+      <main>
+        <p>Note not found</p>
+      </main>
+    )
   }
-}
 
-export default function NotesPage({ params }: Props) {
-  return <NoteModal params={params} />
+  return (
+    <main>
+      <NoteDetails />
+    </main>
+  )
 }

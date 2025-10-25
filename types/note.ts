@@ -1,14 +1,16 @@
+export type NoteTag = 'Work' | 'Personal' | 'Meeting' | 'Shopping' | 'Todo'
+
 export type Note = {
   id: string
   title: string
   content: string
-  tag: 'Work' | 'Personal' | 'Meeting' | 'Shopping' | 'Todo'
+  tag: NoteTag
   createdAt: string
   updatedAt: string
 }
 
 export type NoteListResponse = {
   notes: Note[]
-  totalPages: number
   page: number
+  totalPages: number
 }
