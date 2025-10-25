@@ -9,8 +9,7 @@ export const metadata = {
 }
 
 export default async function ProfilePage() {
-  const rawUser =
-    (await checkSessionServer()) || (await getMeServer()) || null
+  const rawUser = (await checkSessionServer()) || (await getMeServer()) || null
 
   const user = rawUser && {
     username: rawUser.username || 'your_username',

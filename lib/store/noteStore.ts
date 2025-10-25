@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import type { NoteTag } from '@/types/note'
 
 export type NoteDraftState = {
   title: string
@@ -11,8 +12,6 @@ export type NoteDraftState = {
   setTag: (v: NoteTag) => void
   reset: () => void
 }
-
-export type NoteTag = 'Work' | 'Personal' | 'Meeting' | 'Shopping' | 'Todo'
 
 export const useNoteDraftStore = create<NoteDraftState>((set) => ({
   title: '',
