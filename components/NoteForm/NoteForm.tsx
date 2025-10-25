@@ -1,93 +1,95 @@
 'use client'
 
-import React, { useState } from 'react'
-import css from './NoteForm.module.css'
-import Button from '../Button/Button'
-import { useQueryClient } from '@tanstack/react-query'
-
+import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNoteDraftStore } from '@/lib/store/noteStore'
 import { NoteDraft, NoteTag } from '@/types/note'
 import { createNote } from '@/lib/api/clientApi'
+import css from './NoteForm.module.css'
 
 type Props = {
-  onSuccess?: () => void
-  onClose?: () => void
+  onSuccessRedirect?: string
 }
 
-const NoteForm = ({ onSuccess, onClose }: Props) => {
-  const queryClient = useQueryClient()
+export default function NoteForm({ onSuccessRedirect = '/notes' }: Props) {
   const router = useRouter()
-  const { draft, setDraft, clearDraft } = useNoteDraftStore()
-  const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
-  const validateForm = (values: NoteDraft) => {
-    const newErrors: { [key: string]: string } = {}
-    if (!values.title) newErrors.title = 'Title is required'
-    if (!values.content) newErrors.content = 'Content is required'
+  const {
+    title,
+    content,
+    tag,
+    setTitle,
+    setContent,
+    setTag,
+    reset,
+  } = useNoteDraftStore()
+
+  const [error, setError] = useState<string>('')
+
+  function validateForm(values: NoteDraft) {
+    if (!values.title.trim()) {
+      return 'Title is required'
+    }
+    if (!values.content.trim()) {
+      return 'Content is required'
+    }
     if (!Object.values(NoteTag).includes(values.tag)) {
-      newErrors.tag = 'Invalid tag'
+      return 'Tag is invalid'
     }
-    return newErrors
+    return ''
   }
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => {
-    const { name, value } = e.target
-    setDraft({ ...draft, [name]: value })
-    setErrors((prev) => ({ ...prev, [name]: '' }))
-  }
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError('')
 
-  const handleSubmit = async (formData: FormData) => {
     const values: NoteDraft = {
-      title: formData.get('title') as string,
-      content: formData.get('content') as string,
-      tag: formData.get('tag') as NoteTag,
+      title,
+      content,
+      tag,
     }
 
-    const validationErrors = validateForm(values)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
+    const validationError = validateForm(values)
+    if (validationError) {
+      setError(validationError)
       return
     }
 
     try {
       await createNote(values)
-      await queryClient.invalidateQueries({ queryKey: ['notes'] })
-      clearDraft()
-      onSuccess?.()
-      router.back()
+      reset()
+      router.push(onSuccessRedirect)
+      router.refresh()
     } catch (err) {
-      console.error('Error creating note:', err)
-      setErrors({ form: 'Failed to create note. Please try again.' })
+      setError('Failed to create note')
     }
   }
 
-  const handleCancel = () => {
-    clearDraft()
-    if (onClose) {
-      onClose()
-    } else {
-      router.back()
-    }
+  function handleChangeTitle(e: React.ChangeEvent<HTMLInputElement>) {
+    setTitle(e.target.value)
+  }
+
+  function handleChangeContent(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setContent(e.target.value)
+  }
+
+  function handleChangeTag(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.target.value as NoteTag
+    setTag(value)
   }
 
   return (
-    <form action={handleSubmit} className={css.form}>
+    <form className={css.form} onSubmit={handleSubmit}>
       <div className={css.formGroup}>
         <label htmlFor="title">Title</label>
         <input
           id="title"
           name="title"
-          type="text"
-          defaultValue={draft?.title}
-          onChange={handleChange}
           className={css.input}
+          value={title}
+          onChange={handleChangeTitle}
+          required
         />
-        {errors.title && <div className={css.error}>{errors.title}</div>}
       </div>
 
       <div className={css.formGroup}>
@@ -95,11 +97,11 @@ const NoteForm = ({ onSuccess, onClose }: Props) => {
         <textarea
           id="content"
           name="content"
-          defaultValue={draft?.content}
-          onChange={handleChange}
           className={css.textarea}
+          value={content}
+          onChange={handleChangeContent}
+          required
         />
-        {errors.content && <div className={css.error}>{errors.content}</div>}
       </div>
 
       <div className={css.formGroup}>
@@ -107,9 +109,10 @@ const NoteForm = ({ onSuccess, onClose }: Props) => {
         <select
           id="tag"
           name="tag"
-          defaultValue={draft?.tag}
-          onChange={handleChange}
           className={css.select}
+          value={tag}
+          onChange={handleChangeTag}
+          required
         >
           <option value={NoteTag.Work}>Work</option>
           <option value={NoteTag.Personal}>Personal</option>
@@ -117,22 +120,15 @@ const NoteForm = ({ onSuccess, onClose }: Props) => {
           <option value={NoteTag.Shopping}>Shopping</option>
           <option value={NoteTag.Todo}>Todo</option>
         </select>
-        {errors.tag && <div className={css.error}>{errors.tag}</div>}
       </div>
 
-      {errors.form && <div className={css.error}>{errors.form}</div>}
-
-      <div className={css.btnGroup}>
-        <Button
-          typeBtn="button"
-          className={css.cancelButton}
-          value="Cancel"
-          onClick={handleCancel}
-        />
-        <Button typeBtn="submit" className={css.submitButton} value="Create" />
+      <div className={css.actions}>
+        <button type="submit" className={css.submitButton}>
+          Save
+        </button>
       </div>
+
+      {error && <p className={css.error}>{error}</p>}
     </form>
   )
 }
-
-export default NoteForm
