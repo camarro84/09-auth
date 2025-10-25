@@ -1,4 +1,4 @@
-import { GetNotesParams, getNotes } from '@/lib/api'
+import { GetNotesParams, getNotes } from '@/lib/api/api'
 import Notes from './Notes.client'
 import {
   HydrationBoundary,

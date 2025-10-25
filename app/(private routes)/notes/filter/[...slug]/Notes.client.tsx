@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 
-import { getNotes, type GetNotesParams } from '@/lib/api'
+import { getNotes, type GetNotesParams } from '@/lib/api/api'
 import type { NoteListResponse } from '@/types/note'
 
 import SearchBox from '@/components/SearchBox/SearchBox'

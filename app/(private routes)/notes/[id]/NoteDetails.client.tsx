@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { fetchNoteById } from '@/lib/api'
+import { fetchNoteById } from '@/lib/api/api'
 import type { Note } from '@/types/note'
 import Loading from '@/app/loading'
 import Error from './error'
