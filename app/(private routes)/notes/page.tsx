@@ -14,6 +14,7 @@ export default async function NotesRoutePage() {
           <h1 className={css.pageTitle}>Notes</h1>
           <p className={css.emptyText}>No notes available.</p>
         </section>
+
         <div className={css.paginationWrapper}>
           <p className={css.paginationText}>Page 1 / 1</p>
         </div>
