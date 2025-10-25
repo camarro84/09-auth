@@ -1,5 +1,4 @@
-import { fetchNoteByIdServer } from '@/lib/api/serverApi'
-import NoteDetails from '@/components/NoteDetails/NoteDetails'
+import NoteDetailsClient from './NoteDetails.client'
 
 type Props = {
   params: Promise<{
@@ -8,21 +7,11 @@ type Props = {
 }
 
 export default async function NotePage({ params }: Props) {
-  const { id } = await params
-
-  const note = await fetchNoteByIdServer(id)
-
-  if (!note) {
-    return (
-      <main>
-        <p>Note not found</p>
-      </main>
-    )
-  }
+  const awaited = await params
 
   return (
     <main>
-      <NoteDetails />
+      <NoteDetailsClient params={awaited} />
     </main>
   )
 }

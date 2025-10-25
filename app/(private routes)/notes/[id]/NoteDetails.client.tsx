@@ -1,37 +1,46 @@
 'use client'
 
-import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'next/navigation'
-
-import Loading from '@/app/loading'
-import Error from './error'
-import NotePreview from '@/components/NotePreview/NotePreview'
 import { fetchNoteById } from '@/lib/api/clientApi'
-import { Note } from '@/types/note'
+import type { Note } from '@/types/note'
 
 type Props = {
-  onClose: () => void
+  params: {
+    id: string
+  }
 }
 
-const Details = ({ onClose }: Props) => {
-  const params = useParams()
-  const noteId = params.id as string
+export default function NoteDetailsClient({ params }: Props) {
+  const { id } = params
 
-  const { data, isLoading, isError, error } = useQuery<Note, Error>({
-    queryKey: ['note', noteId],
-    queryFn: () => fetchNoteById(noteId), // ⚡ передаємо тільки рядок
-    enabled: !!noteId,
+  const { data, isLoading, isError } = useQuery<Note>({
+    queryKey: ['note', id],
+    queryFn: () => fetchNoteById(id),
   })
 
-  if (isLoading) return <Loading />
-
-  if (isError || !data) {
-    const safeError = error instanceof Error ? error.message : 'Unknown error'
-    return <Error error={safeError} value="note details" />
+  if (isLoading) {
+    return (
+      <section>
+        <p>Loading...</p>
+      </section>
+    )
   }
 
-  return <NotePreview data={data} onClose={onClose} />
-}
+  if (isError || !data) {
+    return (
+      <section>
+        <p>Error loading note</p>
+      </section>
+    )
+  }
 
-export default Details
+  return (
+    <section>
+      <article>
+        <h2>{data.title}</h2>
+        <p>{data.content}</p>
+        <p>{data.tag}</p>
+      </article>
+    </section>
+  )
+}
