@@ -1,21 +1,20 @@
 import type { Metadata } from 'next'
 import { Roboto } from 'next/font/google'
 import './globals.css'
-import Header from '@/components/Header/Header'
-import Footer from '@/components/Footer/Footer'
 import TanStackProvider from '@/components/TanStackProvider/TanStackProvider'
 import AuthProvider from '@/components/AuthProvider/AuthProvider'
+import Header from '@/components/Header/Header'
+import Footer from '@/components/Footer/Footer'
 
 const roboto = Roboto({
+  weight: ['400', '500', '700'],
   subsets: ['latin'],
-  weight: ['400', '700'],
-  display: 'swap',
   variable: '--font-roboto',
 })
 
 export const metadata: Metadata = {
   title: 'NoteHub',
-  description: 'Note application',
+  description: 'NoteHub Auth HW-09',
 }
 
 export default function RootLayout({

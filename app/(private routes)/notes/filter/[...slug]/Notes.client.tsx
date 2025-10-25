@@ -1,7 +1,75 @@
-type GetNotesParams = {
-  search?: string
-  tag?: 'Work' | 'Personal' | 'Meeting' | 'Shopping' | 'Todo' | 'all'
-  page?: number
-  perPage?: number
-  sortBy?: 'created' | 'updated'
+'use client'
+
+import { useState, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchNotes } from '@/lib/api/clientApi'
+import type { NoteListResponse } from '@/types/note'
+import NoteList from '@/components/NoteList/NoteList'
+import Pagination from '@/components/Pagination/Pagination'
+import SearchBox from '@/components/SearchBox/SearchBox'
+import css from './NotesPage.module.css'
+
+type AllowedTag = 'Work' | 'Personal' | 'Meeting' | 'Shopping' | 'Todo'
+
+type Props = {
+  tag?: AllowedTag
+}
+
+export default function Notes({ tag }: Props) {
+  const [page, setPage] = useState<number>(1)
+  const [search, setSearch] = useState<string>('')
+
+  const handleSearch = useCallback((value: string) => {
+    setSearch(value)
+    setPage(1)
+  }, [])
+
+  const { data, isLoading, isError } = useQuery<NoteListResponse>({
+    queryKey: ['notes', { tag: tag ?? 'all', page, search }],
+    queryFn: () =>
+      fetchNotes({
+        tag: tag ?? 'all',
+        page,
+        search,
+        perPage: 8,
+      }),
+  })
+
+  if (isLoading) {
+    return (
+      <section className={css.wrapper}>
+        <div className={css.topRow}>
+          <SearchBox onSearch={handleSearch} />
+        </div>
+        <p className={css.status}>Loading...</p>
+      </section>
+    )
+  }
+
+  if (isError || !data) {
+    return (
+      <section className={css.wrapper}>
+        <div className={css.topRow}>
+          <SearchBox onSearch={handleSearch} />
+        </div>
+        <p className={css.status}>Error loading notes</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className={css.wrapper}>
+      <div className={css.topRow}>
+        <SearchBox onSearch={handleSearch} />
+      </div>
+
+      <NoteList notes={data.notes} />
+
+      <Pagination
+        currentPage={data.page}
+        totalPages={data.totalPages}
+        onPageChange={setPage}
+      />
+    </section>
+  )
 }

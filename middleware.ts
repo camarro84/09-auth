@@ -2,15 +2,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
   const accessToken = req.cookies.get('accessToken')?.value
-  const path = req.nextUrl.pathname
 
-  const isAuthPage = path.startsWith('/sign-in') || path.startsWith('/sign-up')
+  const isAuthPage =
+    pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')
 
-  const isProtectedPage =
-    path.startsWith('/profile') || path.startsWith('/notes')
+  const isPrivatePage =
+    pathname.startsWith('/profile') || pathname.startsWith('/notes')
 
-  if (!accessToken && isProtectedPage) {
+  if (!accessToken && isPrivatePage) {
     const loginUrl = new URL('/sign-in', req.url)
     return NextResponse.redirect(loginUrl)
   }
@@ -24,5 +25,11 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/profile/:path*', '/notes/:path*', '/sign-in', '/sign-up'],
+  matcher: [
+    '/sign-in',
+    '/sign-up',
+    '/profile',
+    '/profile/:path*',
+    '/notes/:path*',
+  ],
 }
