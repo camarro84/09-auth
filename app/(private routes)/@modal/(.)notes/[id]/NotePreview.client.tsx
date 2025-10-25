@@ -2,42 +2,52 @@
 
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { fetchNoteById } from '@/lib/api/api'
 import Modal from '@/components/Modal/Modal'
 import type { Note } from '@/types/note'
+import { fetchNoteById } from '@/lib/api/clientApi'
 
-export default function NotePreviewModal({ id }: { id: string }) {
+type Props = {
+  params: {
+    id: string
+  }
+}
+
+export default function NotePreview({ params }: Props) {
   const router = useRouter()
+  const { id } = params
 
-  const { data, isLoading, isError, error } = useQuery<Note>({
+  const { data, isLoading, isError } = useQuery<Note>({
     queryKey: ['note', id],
-    queryFn: () => fetchNoteById({ noteId: id }),
+    queryFn: () => fetchNoteById(id),
   })
 
+  const handleClose = () => {
+    router.back()
+  }
+
+  if (isLoading) {
+    return (
+      <Modal onClose={handleClose}>
+        <p>Loading...</p>
+      </Modal>
+    )
+  }
+
+  if (isError || !data) {
+    return (
+      <Modal onClose={handleClose}>
+        <p>Error loading note</p>
+      </Modal>
+    )
+  }
+
   return (
-    <Modal open={true} onClose={() => router.back()}>
-      {isLoading && <p>Loading...</p>}
-      {isError && (
-        <p>
-          Failed to load note:{' '}
-          {String((error as Error)?.message || 'Unknown error')}
-        </p>
-      )}
-      {data && (
-        <>
-          <h3>{data.title}</h3>
-          <p>{data.content}</p>
-          <p>
-            <strong>Tag:</strong> {data.tag}
-          </p>
-          {'createdAt' in data && data.createdAt && (
-            <p>
-              <strong>Created:</strong>{' '}
-              {new Date(data.createdAt).toLocaleString()}
-            </p>
-          )}
-        </>
-      )}
+    <Modal onClose={handleClose}>
+      <article>
+        <h2>{data.title}</h2>
+        <p>{data.content}</p>
+        <p>{data.tag}</p>
+      </article>
     </Modal>
   )
 }
