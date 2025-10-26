@@ -14,15 +14,8 @@ type Props = {
 export default function NoteForm({ onSuccessRedirect = '/notes' }: Props) {
   const router = useRouter()
 
-  const {
-    title,
-    content,
-    tag,
-    setTitle,
-    setContent,
-    setTag,
-    reset,
-  } = useNoteDraftStore()
+  const { title, content, tag, setTitle, setContent, setTag, reset } =
+    useNoteDraftStore()
 
   const [error, setError] = useState<string>('')
 
