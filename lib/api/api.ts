@@ -1,12 +1,9 @@
 import axios from 'axios'
 
-const baseURL = `${process.env.NEXT_PUBLIC_API_URL}/api`
-
 export const api = axios.create({
-  baseURL,
+  baseURL: '/api/',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    Accept: 'application/json',
   },
 })

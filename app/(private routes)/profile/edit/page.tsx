@@ -1,106 +1,32 @@
 'use client'
 
-import { useEffect, useState, FormEvent } from 'react'
-import Image from 'next/image'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import css from './EditProfilePage.module.css'
-import { getMe, updateMe } from '@/lib/api/clientApi'
+import Image from 'next/image'
 import { useUserStore } from '@/lib/store/authStore'
-import { User } from '@/types/user'
+import { updateMe } from '@/lib/api/clientApi'
+import css from '../ProfilePage.module.css'
 
-export default function ProfileEditPage() {
+export default function EditProfilePage() {
   const router = useRouter()
+  const user = useUserStore((s) => s.user)
+  const setUser = useUserStore((s) => s.setUser)
 
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [username, setUsername] = useState(user?.username ?? '')
 
-  const [user, setUser] = useState<User | null>(null)
-  const [username, setUsername] = useState<string>('')
-
-  useEffect(() => {
-    let isMounted = true
-
-    async function loadUser() {
-      try {
-        const me = await getMe()
-        if (!isMounted) return
-
-        const normalizedUser: User = {
-          email: me.email,
-          username: me.username,
-          avatar:
-            me.avatar ||
-            'https://ac.goit.global/fullstack/react/default-avatar.jpg',
-        }
-
-        setUser(normalizedUser)
-        setUsername(normalizedUser.username || '')
-      } catch {
-        if (!isMounted) return
-
-        const fallbackUser: User = {
-          email: 'your_email@example.com',
-          username: 'your_username',
-          avatar: 'https://ac.goit.global/fullstack/react/default-avatar.jpg',
-        }
-
-        setUser(fallbackUser)
-        setUsername(fallbackUser.username)
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    loadUser()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!user) return
-    setSaving(true)
-    setError('')
-
-    try {
-      const updatedUser = await updateMe({ username })
-
-      useUserStore.getState().setUser(updatedUser)
-
-      const targetUsername = updatedUser.username || ''
-      const targetEmail = updatedUser.email || ''
-
-      router.push(
-        `/profile?username=${encodeURIComponent(
-          targetUsername,
-        )}&email=${encodeURIComponent(targetEmail)}`,
-      )
-      router.refresh()
-    } catch {
-      setError('Failed to save')
-      setSaving(false)
-    }
+    const updated = await updateMe({ username })
+    setUser(updated)
+    router.push('/profile')
   }
 
   function handleCancel() {
     router.push('/profile')
   }
 
-  if (loading) {
-    return (
-      <main className={css.mainContent}>
-        <div className={css.profileCard}>
-          <h1 className={css.formTitle}>Edit Profile</h1>
-          <p>Loading...</p>
-        </div>
-      </main>
-    )
-  }
+  const email = user?.email ?? 'user_email@example.com'
+  const avatar = user?.avatar ?? ''
 
   return (
     <main className={css.mainContent}>
@@ -108,10 +34,7 @@ export default function ProfileEditPage() {
         <h1 className={css.formTitle}>Edit Profile</h1>
 
         <Image
-          src={
-            user?.avatar ||
-            'https://ac.goit.global/fullstack/react/default-avatar.jpg'
-          }
+          src={avatar || '/default-avatar.png'}
           alt="User Avatar"
           width={120}
           height={120}
@@ -127,32 +50,23 @@ export default function ProfileEditPage() {
               className={css.input}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              disabled={saving}
-              required
             />
           </div>
 
-          <p>Email: {user?.email ?? 'your_email@example.com'}</p>
+          <p>Email: {email}</p>
 
           <div className={css.actions}>
-            <button
-              type="submit"
-              className={css.saveButton}
-              disabled={saving || !username.trim()}
-            >
+            <button type="submit" className={css.saveButton}>
               Save
             </button>
             <button
               type="button"
               className={css.cancelButton}
               onClick={handleCancel}
-              disabled={saving}
             >
               Cancel
             </button>
           </div>
-
-          {error && <p className={css.error}>{error}</p>}
         </form>
       </div>
     </main>

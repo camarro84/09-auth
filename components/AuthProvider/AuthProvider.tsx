@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { checkSession, getMe, logout } from '@/lib/api/clientApi'
+import { checkSession, getMe } from '@/lib/api/clientApi'
 import { useUserStore } from '@/lib/store/authStore'
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 export default function AuthProvider({ children }: Props) {
   const setUser = useUserStore((s) => s.setUser)
   const clearUser = useUserStore((s) => s.clearUser)
-  const [initialized, setInitialized] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     let isMounted = true
@@ -20,28 +20,31 @@ export default function AuthProvider({ children }: Props) {
       try {
         const sessionUser = await checkSession()
 
+        if (!isMounted) return
+
         if (!sessionUser) {
-          await logout().catch(() => {})
-          if (isMounted) clearUser()
+          clearUser()
+          setIsLoading(false)
           return
         }
 
         const me = await getMe()
-        if (isMounted && me) {
-          setUser(me)
-        }
+
+        if (!isMounted) return
+
+        setUser(me)
       } catch {
         if (isMounted) {
           clearUser()
         }
       } finally {
-        if (isMounted) setInitialized(true)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
-    if (typeof window !== 'undefined') {
-      syncAuth()
-    }
+    syncAuth()
 
     return () => {
       isMounted = false
