@@ -11,8 +11,10 @@ function isValidToken(value: string | undefined) {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const rawToken = req.cookies.get('accessToken')?.value
-  const hasSession = isValidToken(rawToken)
+  const accessToken = req.cookies.get('accessToken')?.value
+  const refreshToken = req.cookies.get('refreshToken')?.value
+
+  const hasSession = isValidToken(accessToken) || isValidToken(refreshToken)
 
   const isAuthPage =
     pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')

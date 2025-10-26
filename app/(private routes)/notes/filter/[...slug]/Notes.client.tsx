@@ -18,10 +18,10 @@ type Props = {
 
 export default function Notes({ tag }: Props) {
   const [page, setPage] = useState<number>(1)
-  const [search, setSearch] = useState<string>('')
+  const [searchValue, setSearchValue] = useState<string>('')
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
-    setSearch(value)
+    setSearchValue(value)
     setPage(1)
   }, 300)
 
@@ -33,13 +33,13 @@ export default function Notes({ tag }: Props) {
   )
 
   const { data, isLoading, isError } = useQuery<NoteListResponse>({
-    queryKey: ['notes', { tag: tag ?? 'all', page, search }],
+    queryKey: ['notes', { tag: tag ?? null, page, searchValue }],
     queryFn: () =>
       fetchNotes({
-        tag: tag ?? 'all',
+        tag: tag ?? undefined,
         page,
-        search,
-        perPage: 8,
+        search: searchValue,
+        perPage: 12,
       }),
   })
 
@@ -71,7 +71,7 @@ export default function Notes({ tag }: Props) {
     )
   }
 
-  const hasNotes = data.notes && data.notes.length > 0
+  const hasNotes = Array.isArray(data.notes) && data.notes.length > 0
 
   return (
     <section>
