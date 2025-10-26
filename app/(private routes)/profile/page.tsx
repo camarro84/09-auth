@@ -12,26 +12,27 @@ export default async function ProfilePage() {
   const serverUser =
     (await checkSessionServer()) || (await getMeServer()) || null
 
-  const fallbackUser = {
-    email: 'your_email@example.com',
-    username: 'your_username',
-    avatar: 'https://ac.goit.global/fullstack/react/avatar-default.jpg',
-  }
+  const fallbackEmail = 'your_email@example.com'
+  const fallbackUsername = 'your_username'
+  const fallbackAvatar =
+    'https://ac.goit.global/fullstack/react/default-avatar.jpg'
 
-  const finalUser = {
-    email:
-      serverUser?.email && serverUser.email.trim() !== ''
-        ? serverUser.email
-        : fallbackUser.email,
-    username:
-      serverUser?.username && serverUser.username.trim() !== ''
-        ? serverUser.username
-        : fallbackUser.username,
-    avatar:
-      serverUser?.avatar && serverUser.avatar.trim() !== ''
-        ? serverUser.avatar
-        : fallbackUser.avatar,
-  }
+  const safeEmail =
+    typeof serverUser?.email === 'string' && serverUser.email.trim() !== ''
+      ? serverUser.email
+      : fallbackEmail
+
+  const safeUsername =
+    typeof serverUser?.username === 'string' &&
+    serverUser.username.trim() !== ''
+      ? serverUser.username
+      : fallbackUsername
+
+  const safeAvatar =
+    typeof serverUser?.avatar === 'string' &&
+    serverUser.avatar.trim() !== ''
+      ? serverUser.avatar
+      : fallbackAvatar
 
   return (
     <main className={css.mainContent}>
@@ -45,17 +46,18 @@ export default async function ProfilePage() {
 
         <div className={css.avatarWrapper}>
           <Image
-            src={finalUser.avatar}
+            src={safeAvatar}
             alt="User Avatar"
             width={120}
             height={120}
             className={css.avatar}
+            priority
           />
         </div>
 
         <div className={css.profileInfo}>
-          <p>Username: {finalUser.username}</p>
-          <p>Email: {finalUser.email}</p>
+          <p>Username: {safeUsername}</p>
+          <p>Email: {safeEmail}</p>
         </div>
       </div>
     </main>
