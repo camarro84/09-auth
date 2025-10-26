@@ -1,9 +1,7 @@
-'use client'
-
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { useUserStore } from '@/lib/store/authStore'
+import { getMeServer } from '@/lib/api/serverApi'
 import css from './ProfilePage.module.css'
 
 export const metadata: Metadata = {
@@ -11,8 +9,8 @@ export const metadata: Metadata = {
   description: 'User profile page',
 }
 
-export default function ProfilePage() {
-  const user = useUserStore((s) => s.user)
+export default async function ProfilePage() {
+  const user = await getMeServer()
 
   const username = user?.username ?? 'your_username'
   const email = user?.email ?? 'your_email@example.com'
