@@ -7,13 +7,13 @@ import NoteDetailsClient from './NoteDetails.client'
 import { fetchNoteByIdServer } from '@/lib/api/serverApi'
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function NotePage({ params }: Props) {
-  const { id } = params
+  const { id } = await params
 
   const queryClient = new QueryClient()
 
