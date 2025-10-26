@@ -1,35 +1,58 @@
 import { cookies } from 'next/headers'
-import { api } from './api'
 import type { User } from '@/types/user'
 import type { Note, NoteListResponse } from '@/types/note'
 
-async function cookieHeader() {
+const BASE_URL = 'https://notehub-api.goit.study'
+
+async function buildCookieHeader() {
   const jar = await cookies()
-  return jar
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
+  const all = jar.getAll()
+  return all
+    .map(
+      ({ name, value }: { name: string; value: string }) => `${name}=${value}`,
+    )
     .join('; ')
 }
 
 export async function checkSessionServer(): Promise<User | null> {
+  const res = await fetch(`${BASE_URL}/auth/session`, {
+    method: 'GET',
+    headers: {
+      cookie: await buildCookieHeader(),
+    },
+    cache: 'no-store',
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    return null
+  }
+
   try {
-    const res = await api.get<User | null>('/auth/session', {
-      headers: { Cookie: await cookieHeader() },
-      withCredentials: true,
-    })
-    return res.data ?? null
+    const data = await res.json()
+    return data || null
   } catch {
     return null
   }
 }
 
 export async function getMeServer(): Promise<User | null> {
+  const res = await fetch(`${BASE_URL}/users/me`, {
+    method: 'GET',
+    headers: {
+      cookie: await buildCookieHeader(),
+    },
+    cache: 'no-store',
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    return null
+  }
+
   try {
-    const res = await api.get<User>('/users/me', {
-      headers: { Cookie: await cookieHeader() },
-      withCredentials: true,
-    })
-    return res.data
+    const data = await res.json()
+    return data || null
   } catch {
     return null
   }
@@ -41,26 +64,43 @@ export async function fetchNotesServer(params: {
   search?: string
   tag?: string
 }): Promise<NoteListResponse | null> {
-  try {
-    const res = await api.get<NoteListResponse>('/notes', {
-      params,
-      headers: { Cookie: await cookieHeader() },
-      withCredentials: true,
-    })
-    return res.data
-  } catch {
+  const query = new URLSearchParams()
+  if (params.page !== undefined) query.set('page', String(params.page))
+  if (params.perPage !== undefined) query.set('perPage', String(params.perPage))
+  if (params.search) query.set('search', params.search)
+  if (params.tag) query.set('tag', params.tag)
+
+  const res = await fetch(`${BASE_URL}/notes?${query.toString()}`, {
+    method: 'GET',
+    headers: {
+      cookie: await buildCookieHeader(),
+    },
+    cache: 'no-store',
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
     return null
   }
+
+  const data = await res.json()
+  return data || null
 }
 
 export async function fetchNoteByIdServer(id: string): Promise<Note | null> {
-  try {
-    const res = await api.get<Note>(`/notes/${id}`, {
-      headers: { Cookie: await cookieHeader() },
-      withCredentials: true,
-    })
-    return res.data
-  } catch {
+  const res = await fetch(`${BASE_URL}/notes/${id}`, {
+    method: 'GET',
+    headers: {
+      cookie: await buildCookieHeader(),
+    },
+    cache: 'no-store',
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
     return null
   }
+
+  const data = await res.json()
+  return data || null
 }

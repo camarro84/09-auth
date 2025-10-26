@@ -5,31 +5,32 @@ import { checkSessionServer, getMeServer } from '@/lib/api/serverApi'
 
 export const metadata = {
   title: 'Profile Page',
-  description: 'User profile',
+  description: 'User profile page with account info',
 }
 
 export default async function ProfilePage() {
-  const rawUser = (await checkSessionServer()) || (await getMeServer()) || null
+  const serverUser =
+    (await checkSessionServer()) || (await getMeServer()) || null
 
-  const user = rawUser && {
-    username: rawUser.username || 'your_username',
-    email: rawUser.email || 'your_email@example.com',
-    avatar:
-      rawUser.avatar ||
-      'https://ac.goit.global/fullstack/react/avatar-default.jpg',
+  const fallbackUser = {
+    email: 'your_email@example.com',
+    username: 'your_username',
+    avatar: 'https://ac.goit.global/fullstack/react/avatar-default.jpg',
   }
 
-  if (!user) {
-    return (
-      <main className={css.mainContent}>
-        <div className={css.profileCard}>
-          <h1 className={css.formTitle}>You are not logged in</h1>
-          <Link href="/sign-in" className={css.editProfileButton}>
-            Go to Sign in
-          </Link>
-        </div>
-      </main>
-    )
+  const finalUser = {
+    email:
+      serverUser?.email && serverUser.email.trim() !== ''
+        ? serverUser.email
+        : fallbackUser.email,
+    username:
+      serverUser?.username && serverUser.username.trim() !== ''
+        ? serverUser.username
+        : fallbackUser.username,
+    avatar:
+      serverUser?.avatar && serverUser.avatar.trim() !== ''
+        ? serverUser.avatar
+        : fallbackUser.avatar,
   }
 
   return (
@@ -44,7 +45,7 @@ export default async function ProfilePage() {
 
         <div className={css.avatarWrapper}>
           <Image
-            src={user.avatar}
+            src={finalUser.avatar}
             alt="User Avatar"
             width={120}
             height={120}
@@ -53,8 +54,8 @@ export default async function ProfilePage() {
         </div>
 
         <div className={css.profileInfo}>
-          <p>Username: {user.username}</p>
-          <p>Email: {user.email}</p>
+          <p>Username: {finalUser.username}</p>
+          <p>Email: {finalUser.email}</p>
         </div>
       </div>
     </main>

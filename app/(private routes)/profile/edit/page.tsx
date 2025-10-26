@@ -1,81 +1,99 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import css from './EditProfilePage.module.css'
+import { useEffect, useState, FormEvent } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import css from './EditProfilePage.module.css'
 import { getMe, updateMe } from '@/lib/api/clientApi'
 import { useUserStore } from '@/lib/store/authStore'
+import { User } from '@/types/user'
 
 export default function ProfileEditPage() {
   const router = useRouter()
-  const userFromStore = useUserStore((s) => s.user)
-  const setUser = useUserStore((s) => s.setUser)
 
-  const [username, setUsername] = useState(userFromStore?.username || '')
-  const [email, setEmail] = useState(userFromStore?.email || '')
-  const [avatar, setAvatar] = useState(
-    userFromStore?.avatar ||
-      'https://ac.goit.global/fullstack/react/avatar-default.jpg',
-  )
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const [user, setUser] = useState<User | null>(null)
+  const [username, setUsername] = useState<string>('')
+
   useEffect(() => {
-    let active = true
-    async function load() {
+    let isMounted = true
+
+    async function loadUser() {
       try {
-        if (!userFromStore) {
-          const me = await getMe()
-          if (active && me) {
-            setUser(me)
-            setUsername(me.username)
-            setEmail(me.email)
-            setAvatar(
-              me.avatar ||
-                'https://ac.goit.global/fullstack/react/avatar-default.jpg',
-            )
-          }
-        } else {
-          setUsername(userFromStore.username)
-          setEmail(userFromStore.email)
-          setAvatar(
-            userFromStore.avatar ||
-              'https://ac.goit.global/fullstack/react/avatar-default.jpg',
-          )
+        const me = await getMe()
+        if (!isMounted) return
+
+        const normalizedUser: User = {
+          email: me.email,
+          username: me.username,
+          avatar:
+            me.avatar ||
+            'https://ac.goit.global/fullstack/react/avatar-default.jpg',
         }
-      } catch {
-        router.push('/sign-in')
-      }
-    }
-    load()
-    return () => {
-      active = false
-    }
-  }, [router, setUser, userFromStore])
 
-  const onSubmit = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-      setSaving(true)
-      setError('')
-
-      try {
-        const updated = await updateMe({ username })
-        setUser(updated)
-        router.push('/profile')
+        setUser(normalizedUser)
+        setUsername(normalizedUser.username || '')
       } catch {
-        setError('Update failed')
+        if (!isMounted) return
+
+        const fallbackUser: User = {
+          email: 'your_email@example.com',
+          username: 'your_username',
+          avatar: 'https://ac.goit.global/fullstack/react/avatar-default.jpg',
+        }
+
+        setUser(fallbackUser)
+        setUsername(fallbackUser.username)
       } finally {
-        setSaving(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
-    },
-    [router, setUser, username],
-  )
+    }
 
-  const onCancel = useCallback(() => {
+    loadUser()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!user) return
+    setSaving(true)
+    setError('')
+
+    try {
+      const updatedUser = await updateMe({ username })
+
+      useUserStore.getState().setUser(updatedUser)
+
+      router.push('/profile')
+      router.refresh()
+    } catch {
+      setError('Failed to save')
+      setSaving(false)
+    }
+  }
+
+  function handleCancel() {
     router.push('/profile')
-  }, [router])
+  }
+
+  if (loading) {
+    return (
+      <main className={css.mainContent}>
+        <div className={css.profileCard}>
+          <h1 className={css.formTitle}>Edit Profile</h1>
+          <p>Loading...</p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className={css.mainContent}>
@@ -83,14 +101,17 @@ export default function ProfileEditPage() {
         <h1 className={css.formTitle}>Edit Profile</h1>
 
         <Image
-          src={avatar}
+          src={
+            user?.avatar ||
+            'https://ac.goit.global/fullstack/react/avatar-default.jpg'
+          }
           alt="User Avatar"
           width={120}
           height={120}
           className={css.avatar}
         />
 
-        <form className={css.profileInfo} onSubmit={onSubmit}>
+        <form className={css.profileInfo} onSubmit={handleSubmit}>
           <div className={css.usernameWrapper}>
             <label htmlFor="username">Username:</label>
             <input
@@ -99,19 +120,25 @@ export default function ProfileEditPage() {
               className={css.input}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              disabled={saving}
+              required
             />
           </div>
 
-          <p>Email: {email}</p>
+          <p>Email: {user?.email ?? 'your_email@example.com'}</p>
 
           <div className={css.actions}>
-            <button type="submit" className={css.saveButton} disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
+            <button
+              type="submit"
+              className={css.saveButton}
+              disabled={saving || !username.trim()}
+            >
+              Save
             </button>
             <button
               type="button"
               className={css.cancelButton}
-              onClick={onCancel}
+              onClick={handleCancel}
               disabled={saving}
             >
               Cancel
