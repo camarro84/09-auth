@@ -7,14 +7,11 @@ import type { Note } from '@/types/note'
 import { fetchNoteById } from '@/lib/api/clientApi'
 
 type Props = {
-  params: {
-    id: string
-  }
+  id: string
 }
 
-export default function NotePreview({ params }: Props) {
+export default function NotePreviewClient({ id }: Props) {
   const router = useRouter()
-  const { id } = params
 
   const { data, isLoading, isError } = useQuery<Note>({
     queryKey: ['note', id],

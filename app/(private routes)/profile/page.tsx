@@ -1,38 +1,76 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import css from './ProfilePage.module.css'
 import { checkSessionServer, getMeServer } from '@/lib/api/serverApi'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Profile Page',
   description: 'User profile page with account info',
 }
 
-export default async function ProfilePage() {
-  const serverUser =
-    (await checkSessionServer()) || (await getMeServer()) || null
+type Props = {
+  searchParams?: {
+    username?: string
+    email?: string
+  }
+}
+
+export default async function ProfilePage({ searchParams }: Props) {
+  const sessionRes = await checkSessionServer()
+  let sessionUser: {
+    email?: string
+    username?: string
+    avatar?: string
+  } | null = null
+
+  if (sessionRes.ok) {
+    try {
+      sessionUser = await sessionRes.json()
+    } catch {
+      sessionUser = null
+    }
+  }
+
+  const meUser = await getMeServer()
+
+  const serverUser = sessionUser || meUser || null
 
   const fallbackEmail = 'your_email@example.com'
   const fallbackUsername = 'your_username'
   const fallbackAvatar =
     'https://ac.goit.global/fullstack/react/default-avatar.jpg'
 
-  const safeEmail =
-    typeof serverUser?.email === 'string' && serverUser.email.trim() !== ''
-      ? serverUser.email
-      : fallbackEmail
+  const qpUsername =
+    typeof searchParams?.username === 'string' &&
+    searchParams.username.trim() !== ''
+      ? searchParams.username
+      : null
 
-  const safeUsername =
+  const qpEmail =
+    typeof searchParams?.email === 'string' && searchParams.email.trim() !== ''
+      ? searchParams.email
+      : null
+
+  const apiUsername =
     typeof serverUser?.username === 'string' &&
     serverUser.username.trim() !== ''
       ? serverUser.username
-      : fallbackUsername
+      : null
 
-  const safeAvatar =
-    typeof serverUser?.avatar === 'string' &&
-    serverUser.avatar.trim() !== ''
+  const apiEmail =
+    typeof serverUser?.email === 'string' && serverUser.email.trim() !== ''
+      ? serverUser.email
+      : null
+
+  const apiAvatar =
+    typeof serverUser?.avatar === 'string' && serverUser.avatar.trim() !== ''
       ? serverUser.avatar
-      : fallbackAvatar
+      : null
+
+  const safeUsername = qpUsername || apiUsername || fallbackUsername
+  const safeEmail = qpEmail || apiEmail || fallbackEmail
+  const safeAvatar = apiAvatar || fallbackAvatar
 
   return (
     <main className={css.mainContent}>

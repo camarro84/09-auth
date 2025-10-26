@@ -31,7 +31,7 @@ export default function ProfileEditPage() {
           username: me.username,
           avatar:
             me.avatar ||
-            'https://ac.goit.global/fullstack/react/avatar-default.jpg',
+            'https://ac.goit.global/fullstack/react/default-avatar.jpg',
         }
 
         setUser(normalizedUser)
@@ -42,7 +42,7 @@ export default function ProfileEditPage() {
         const fallbackUser: User = {
           email: 'your_email@example.com',
           username: 'your_username',
-          avatar: 'https://ac.goit.global/fullstack/react/avatar-default.jpg',
+          avatar: 'https://ac.goit.global/fullstack/react/default-avatar.jpg',
         }
 
         setUser(fallbackUser)
@@ -72,7 +72,14 @@ export default function ProfileEditPage() {
 
       useUserStore.getState().setUser(updatedUser)
 
-      router.push('/profile')
+      const targetUsername = updatedUser.username || ''
+      const targetEmail = updatedUser.email || ''
+
+      router.push(
+        `/profile?username=${encodeURIComponent(
+          targetUsername,
+        )}&email=${encodeURIComponent(targetEmail)}`,
+      )
       router.refresh()
     } catch {
       setError('Failed to save')
@@ -103,7 +110,7 @@ export default function ProfileEditPage() {
         <Image
           src={
             user?.avatar ||
-            'https://ac.goit.global/fullstack/react/avatar-default.jpg'
+            'https://ac.goit.global/fullstack/react/default-avatar.jpg'
           }
           alt="User Avatar"
           width={120}

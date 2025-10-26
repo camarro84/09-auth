@@ -4,17 +4,13 @@ import type { Note, NoteListResponse } from '@/types/note'
 
 const BASE_URL = 'https://notehub-api.goit.study'
 
-async function buildCookieHeader() {
+async function buildCookieHeader(): Promise<string> {
   const jar = await cookies()
   const all = jar.getAll()
-  return all
-    .map(
-      ({ name, value }: { name: string; value: string }) => `${name}=${value}`,
-    )
-    .join('; ')
+  return all.map(({ name, value }) => `${name}=${value}`).join('; ')
 }
 
-export async function checkSessionServer(): Promise<User | null> {
+export async function checkSessionServer(): Promise<Response> {
   const res = await fetch(`${BASE_URL}/auth/session`, {
     method: 'GET',
     headers: {
@@ -24,16 +20,7 @@ export async function checkSessionServer(): Promise<User | null> {
     credentials: 'include',
   })
 
-  if (!res.ok) {
-    return null
-  }
-
-  try {
-    const data = await res.json()
-    return data || null
-  } catch {
-    return null
-  }
+  return res
 }
 
 export async function getMeServer(): Promise<User | null> {
@@ -51,7 +38,7 @@ export async function getMeServer(): Promise<User | null> {
   }
 
   try {
-    const data = await res.json()
+    const data: User = await res.json()
     return data || null
   } catch {
     return null
@@ -83,7 +70,7 @@ export async function fetchNotesServer(params: {
     return null
   }
 
-  const data = await res.json()
+  const data: NoteListResponse = await res.json()
   return data || null
 }
 
@@ -101,6 +88,6 @@ export async function fetchNoteByIdServer(id: string): Promise<Note | null> {
     return null
   }
 
-  const data = await res.json()
+  const data: Note = await res.json()
   return data || null
 }

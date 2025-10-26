@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
+import { useDebouncedCallback } from 'use-debounce'
 import { fetchNotes } from '@/lib/api/clientApi'
 import type { NoteListResponse } from '@/types/note'
 import NoteList from '@/components/NoteList/NoteList'
@@ -18,10 +20,17 @@ export default function Notes({ tag }: Props) {
   const [page, setPage] = useState<number>(1)
   const [search, setSearch] = useState<string>('')
 
-  const handleSearch = useCallback((value: string) => {
+  const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearch(value)
     setPage(1)
-  }, [])
+  }, 300)
+
+  const handleSearch = useCallback(
+    (value: string) => {
+      debouncedSearch(value)
+    },
+    [debouncedSearch],
+  )
 
   const { data, isLoading, isError } = useQuery<NoteListResponse>({
     queryKey: ['notes', { tag: tag ?? 'all', page, search }],
@@ -38,6 +47,9 @@ export default function Notes({ tag }: Props) {
     return (
       <section>
         <div>
+          <Link href="/notes/action/create">Create Note</Link>
+        </div>
+        <div>
           <SearchBox onSearch={handleSearch} />
         </div>
         <p>Loading...</p>
@@ -49,6 +61,9 @@ export default function Notes({ tag }: Props) {
     return (
       <section>
         <div>
+          <Link href="/notes/action/create">Create Note</Link>
+        </div>
+        <div>
           <SearchBox onSearch={handleSearch} />
         </div>
         <p>Error loading notes</p>
@@ -56,19 +71,31 @@ export default function Notes({ tag }: Props) {
     )
   }
 
+  const hasNotes = data.notes && data.notes.length > 0
+
   return (
     <section>
+      <div>
+        <Link href="/notes/action/create">Create Note</Link>
+      </div>
+
       <div>
         <SearchBox onSearch={handleSearch} />
       </div>
 
-      <NoteList notes={data.notes} />
+      {hasNotes ? (
+        <>
+          <NoteList notes={data.notes} />
 
-      <Pagination
-        currentPage={data.page}
-        totalPages={data.totalPages}
-        onPageChange={setPage}
-      />
+          <Pagination
+            currentPage={data.page}
+            totalPages={data.totalPages}
+            onPageChange={setPage}
+          />
+        </>
+      ) : (
+        <p>No notes found</p>
+      )}
     </section>
   )
 }

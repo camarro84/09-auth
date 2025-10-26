@@ -12,8 +12,7 @@ type Props = {
 const NoteList = ({ notes }: Props) => {
   const queryClient = useQueryClient()
 
-  // ⚡ Виправлена мутація — передаємо тільки рядок, як очікує deleteNote
-  const mutation = useMutation<void, unknown, string>({
+  const mutation = useMutation<Note, unknown, string>({
     mutationFn: (noteId: string) => deleteNote(noteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
@@ -30,6 +29,7 @@ const NoteList = ({ notes }: Props) => {
         <li className={css.listItem} key={note.id}>
           <Link href={`/notes/${note.id}`} className={css.content}>
             <p className={css.title}>{note.title}</p>
+            <p className={css.contentText}>{note.content}</p>
           </Link>
           <div className={css.footer}>
             <p className={css.tag}>{note.tag}</p>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNoteDraftStore } from '@/lib/store/noteStore'
 import { NoteDraft, NoteTag } from '@/types/note'
 import { createNote } from '@/lib/api/clientApi'
@@ -13,6 +14,7 @@ type Props = {
 
 export default function NoteForm({ onSuccessRedirect = '/notes' }: Props) {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const { title, content, tag, setTitle, setContent, setTag, reset } =
     useNoteDraftStore()
@@ -32,6 +34,19 @@ export default function NoteForm({ onSuccessRedirect = '/notes' }: Props) {
     return ''
   }
 
+  const mutation = useMutation({
+    mutationFn: (values: NoteDraft) => createNote(values),
+    onSuccess: async () => {
+      reset()
+      await queryClient.invalidateQueries({ queryKey: ['notes'] })
+      router.push(onSuccessRedirect)
+      router.refresh()
+    },
+    onError: () => {
+      setError('Failed to create note')
+    },
+  })
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
@@ -48,14 +63,7 @@ export default function NoteForm({ onSuccessRedirect = '/notes' }: Props) {
       return
     }
 
-    try {
-      await createNote(values)
-      reset()
-      router.push(onSuccessRedirect)
-      router.refresh()
-    } catch (err) {
-      setError('Failed to create note')
-    }
+    mutation.mutate(values)
   }
 
   function handleChangeTitle(e: React.ChangeEvent<HTMLInputElement>) {
@@ -69,6 +77,10 @@ export default function NoteForm({ onSuccessRedirect = '/notes' }: Props) {
   function handleChangeTag(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.target.value as NoteTag
     setTag(value)
+  }
+
+  function handleCancel() {
+    router.back()
   }
 
   return (
@@ -118,6 +130,13 @@ export default function NoteForm({ onSuccessRedirect = '/notes' }: Props) {
       <div className={css.actions}>
         <button type="submit" className={css.submitButton}>
           Save
+        </button>
+        <button
+          type="button"
+          className={css.cancelButton}
+          onClick={handleCancel}
+        >
+          Cancel
         </button>
       </div>
 
