@@ -8,20 +8,16 @@
   margin: 0;
 }
 
-.pagination li,
-.btnArrow {
+.pagination li {
   border: 1px solid #dee2e6;
   border-radius: 4px;
   cursor: pointer;
   min-width: 36px;
   height: 36px;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.pagination li a,
-.arrow {
+.pagination li a {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,9 +28,7 @@
   font-size: 14px;
 }
 
-.pagination li:hover,
-.btnArrow:hover .arrowPrev,
-.btnArrow:hover .arrowNext {
+.pagination li:hover {
   background-color: #e9ecef;
 }
 
@@ -50,18 +44,4 @@
 .active a {
   color: #fff !important;
   font-weight: 500;
-}
-.arrow {
-  width: 100%;
-  height: 100%;
-  outline: none;
-  border: none;
-  cursor: pointer;
-}
-.arrowUnactive,
-.pagination li.btnArrowUnActive {
-  cursor: default;
-}
-.pagination li:hover.btnArrowUnActive {
-  background-color: transparent;
 }

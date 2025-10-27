@@ -69,8 +69,3 @@
   font-size: 12px;
   margin-top: 4px;
 }
-.btnGroup {
-  display: flex;
-  gap: 16px;
-  justify-content: end;
-}
