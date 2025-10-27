@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
+'use client'
+
 import css from './Pagination.module.css'
-import clsx from 'clsx'
-import Button from '../Button/Button'
 
 type Props = {
   totalPages: number
@@ -9,78 +8,37 @@ type Props = {
   onPageChange: (page: number) => void
 }
 
-const Pagination = ({ totalPages, onPageChange }: Props) => {
-  const [activePage, setActivePage] = useState(1)
-
-  const handleClick = (page: number) => {
-    setActivePage(page)
+export default function Pagination({
+  totalPages,
+  currentPage,
+  onPageChange,
+}: Props) {
+  const goTo = (page: number) => {
+    if (page < 1 || page > totalPages) return
     onPageChange(page)
   }
-  const handleArrowClick = (direction: 'prev' | 'next') => {
-    if (direction === 'prev' && activePage > 1) {
-      const newPage = activePage - 1
-      setActivePage(newPage)
-      onPageChange(newPage)
-    }
-    if (direction === 'next' && activePage < totalPages) {
-      const newPage = activePage + 1
-      setActivePage(newPage)
-      onPageChange(newPage)
-    }
-  }
+
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
 
   return (
-    <div className={css.paginationBlock}>
-      <ul className={css.pagination}>
+    <ul className={css.pagination}>
+      <li onClick={() => goTo(currentPage - 1)}>
+        <a>{'‹'}</a>
+      </li>
+
+      {pages.map((p) => (
         <li
-          className={clsx(
-            activePage === 1 ? css.btnArrowUnActive : css.btnArrow,
-          )}
+          key={p}
+          className={p === currentPage ? css.active : undefined}
+          onClick={() => goTo(p)}
         >
-          <Button
-            name="btnPrew"
-            typeBtn="button"
-            className={clsx(
-              activePage === 1
-                ? clsx(css.arrowUnactive, css.arrow)
-                : clsx(css.arrow, css.arrowPrev),
-            )}
-            value="<-"
-            onClick={() => handleArrowClick('prev')}
-          />
+          <a>{p}</a>
         </li>
-        {Array.from({ length: totalPages }, (_, index) => {
-          const page = index + 1
-          return (
-            <li
-              key={page}
-              onClick={() => handleClick(page)}
-              className={page === activePage ? css.active : ''}
-            >
-              <a>{page}</a>
-            </li>
-          )
-        })}
-        <li
-          className={clsx(
-            activePage === totalPages ? css.btnArrowUnActive : css.btnArrow,
-          )}
-        >
-          <Button
-            name="btnNext"
-            typeBtn="button"
-            className={clsx(
-              activePage === totalPages
-                ? clsx(css.arrowUnactive, css.arrow)
-                : clsx(css.arrow, css.arrowNext),
-            )}
-            value="->"
-            onClick={() => handleArrowClick('next')}
-          />
-        </li>
-      </ul>
-    </div>
+      ))}
+
+      <li onClick={() => goTo(currentPage + 1)}>
+        <a>{'›'}</a>
+      </li>
+    </ul>
   )
 }
-
-export default Pagination
