@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
-import './globals.css'
 import Header from '@/components/Header/Header'
-import Footer from '@/components/Footer/Footer'
 import TanStackProvider from '@/components/TanStackProvider/TanStackProvider'
 import AuthProvider from '@/components/AuthProvider/AuthProvider'
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'NoteHub',
-  description: 'NoteHub application',
+  description: 'Notes app',
 }
 
 export default function RootLayout({
@@ -19,13 +18,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning={true}>
         <TanStackProvider>
           <AuthProvider>
             <Header />
             {children}
             {modal}
-            <Footer />
           </AuthProvider>
         </TanStackProvider>
       </body>

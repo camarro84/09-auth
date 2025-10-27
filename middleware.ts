@@ -1,34 +1,36 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { checkSessionServer } from '@/lib/api/serverApi'
 
-function isValidToken(value: string | undefined) {
-  if (!value) return false
-  const v = value.trim().toLowerCase()
-  if (v === '' || v === 'null' || v === 'undefined') return false
-  return true
-}
+const privateRoutes = ['/profile', '/notes']
+const authRoutes = ['/sign-in', '/sign-up']
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+
+  const isPrivate = privateRoutes.some((route) => pathname.startsWith(route))
+  const isAuth = authRoutes.some((route) => pathname.startsWith(route))
 
   const accessToken = req.cookies.get('accessToken')?.value
   const refreshToken = req.cookies.get('refreshToken')?.value
 
-  const hasSession = isValidToken(accessToken) || isValidToken(refreshToken)
+  let user = null
 
-  const isAuthPage =
-    pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')
+  if (accessToken) {
+    user = await checkSessionServer()
+  } else if (refreshToken) {
+    user = await checkSessionServer()
+  }
 
-  const isPrivatePage =
-    pathname.startsWith('/profile') || pathname.startsWith('/notes')
-
-  if (isPrivatePage && !hasSession) {
-    const url = new URL('/sign-in', req.url)
+  if (isPrivate && !user) {
+    const url = req.nextUrl.clone()
+    url.pathname = '/sign-in'
     return NextResponse.redirect(url)
   }
 
-  if (isAuthPage && hasSession) {
-    const url = new URL('/profile', req.url)
+  if (isAuth && user) {
+    const url = req.nextUrl.clone()
+    url.pathname = '/profile'
     return NextResponse.redirect(url)
   }
 

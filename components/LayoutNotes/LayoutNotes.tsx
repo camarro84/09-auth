@@ -1,15 +1,14 @@
 'use client'
 
-import css from './LayoutNotes.module.css'
-
 import React, { ReactNode } from 'react'
+import css from './LayoutNotes.module.css'
 
 type Props = {
   sidebar: ReactNode
   children: ReactNode
 }
 
-const LayoutNotes = ({ sidebar, children }: Props) => {
+export default function LayoutNotes({ sidebar, children }: Props) {
   return (
     <div className={css.container}>
       <div className={css.sidebar}>{sidebar}</div>
@@ -17,5 +16,3 @@ const LayoutNotes = ({ sidebar, children }: Props) => {
     </div>
   )
 }
-
-export default LayoutNotes

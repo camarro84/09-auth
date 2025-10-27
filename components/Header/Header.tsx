@@ -30,7 +30,7 @@ export default function Header() {
           {isAuthenticated && (
             <li className={css.navigationItem}>
               <Link
-                href="/notes"
+                href="/notes/filter/all"
                 className={css.navigationLink}
                 prefetch={false}
               >
