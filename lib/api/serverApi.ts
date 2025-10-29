@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { api } from './api'
+import type { AxiosResponse } from 'axios'
 import type { User } from '@/types/user'
 import type { Note, NoteListResponse } from '@/types/note'
 
@@ -11,7 +12,9 @@ async function getCookieHeader() {
   return list.join('; ')
 }
 
-export async function checkSessionServer(): Promise<User | null> {
+export async function checkSessionServer(): Promise<
+  AxiosResponse<User | null> | null
+> {
   try {
     const res = await api.get<User | null>('/auth/session', {
       headers: {
@@ -19,7 +22,7 @@ export async function checkSessionServer(): Promise<User | null> {
       },
       withCredentials: true,
     })
-    return res.data || null
+    return res
   } catch {
     return null
   }

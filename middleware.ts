@@ -16,10 +16,12 @@ export async function middleware(req: NextRequest) {
 
   let user = null
 
-  if (accessToken) {
-    user = await checkSessionServer()
-  } else if (refreshToken) {
-    user = await checkSessionServer()
+  if (accessToken || refreshToken) {
+    try {
+      user = await checkSessionServer()
+    } catch {
+      user = null
+    }
   }
 
   if (isPrivate && !user) {
@@ -30,7 +32,7 @@ export async function middleware(req: NextRequest) {
 
   if (isAuth && user) {
     const url = req.nextUrl.clone()
-    url.pathname = '/profile'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
