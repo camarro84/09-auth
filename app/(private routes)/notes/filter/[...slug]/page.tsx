@@ -1,21 +1,35 @@
+import { fetchNotesServer } from '@/lib/api/serverApi'
 import Notes from './Notes.client'
-
-const allowed = ['Work', 'Personal', 'Meeting', 'Shopping', 'Todo'] as const
-type AllowedTag = (typeof allowed)[number]
+import type { NoteListResponse } from '@/types/note'
 
 type Props = {
-  params: Promise<{
-    slug?: string[]
-  }>
+  params: { slug: string[] }
+  searchParams?: { q?: string | string[] }
 }
 
-export default async function NotesPage({ params }: Props) {
-  const { slug } = await params
-  const raw = slug?.[0]
+export default async function Page({ params, searchParams }: Props) {
+  const tagRaw = params?.slug?.[0]
+  const tag = !tagRaw || tagRaw === 'all' ? undefined : tagRaw
+  const qParam = searchParams?.q
+  const query = typeof qParam === 'string' ? qParam : undefined
 
-  const tag: AllowedTag | undefined = allowed.includes(raw as AllowedTag)
-    ? (raw as AllowedTag)
-    : undefined
+  const data = await fetchNotesServer({
+    page: 1,
+    perPage: 12,
+    tag,
+    query,
+  })
 
-  return <Notes tag={tag} />
+  const page = data?.page ?? 1
+  const perPage = data?.perPage ?? 12
+  const total = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / perPage))
+
+  const initialData: NoteListResponse = {
+    notes: data?.notes ?? [],
+    page,
+    totalPages,
+  }
+
+  return <Notes initialData={initialData} />
 }

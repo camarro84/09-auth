@@ -1,10 +1,10 @@
+import LayoutNotes from '@/components/LayoutNotes/LayoutNotes'
+
 type Props = {
   children: React.ReactNode
   sidebar: React.ReactNode
 }
 
-const NotesLayout = ({ children }: Props) => {
-  return <section>{children}</section>
+export default function NotesLayout({ children, sidebar }: Props) {
+  return <LayoutNotes sidebar={sidebar}>{children}</LayoutNotes>
 }
-
-export default NotesLayout

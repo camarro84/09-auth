@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Header from '@/components/Header/Header'
-import Footer from '@/components/Footer/Footer'
 import TanStackProvider from '@/components/TanStackProvider/TanStackProvider'
 import AuthProvider from '@/components/AuthProvider/AuthProvider'
+import Footer from '@/components/Footer/Footer'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -19,29 +19,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning={true}>
+      <body suppressHydrationWarning>
         <TanStackProvider>
           <AuthProvider>
-            <div
-              style={{
-                minHeight: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <Header />
-              <main
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                {children}
-                {modal}
-              </main>
-              <Footer />
-            </div>
+            <Header />
+            {children}
+            {modal}
+            <Footer />
           </AuthProvider>
         </TanStackProvider>
       </body>
