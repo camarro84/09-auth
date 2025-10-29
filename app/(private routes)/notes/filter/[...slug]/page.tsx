@@ -2,15 +2,19 @@ import { fetchNotesServer } from '@/lib/api/serverApi'
 import Notes from './Notes.client'
 import type { NoteListResponse } from '@/types/note'
 
-type Props = {
-  params: { slug: string[] }
-  searchParams?: { q?: string | string[] }
-}
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string[] }>
+  searchParams?: Promise<{ q?: string | string[] }>
+}) {
+  const resolvedParams = await params
+  const resolvedSearch = await searchParams
 
-export default async function Page({ params, searchParams }: Props) {
-  const tagRaw = params?.slug?.[0]
+  const tagRaw = resolvedParams?.slug?.[0]
   const tag = !tagRaw || tagRaw === 'all' ? undefined : tagRaw
-  const qParam = searchParams?.q
+  const qParam = resolvedSearch?.q
   const query = typeof qParam === 'string' ? qParam : undefined
 
   const data = await fetchNotesServer({
