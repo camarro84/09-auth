@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { cookies as nextCookies } from 'next/headers'
 
 const privateRoutes = ['/profile', '/notes']
 const authRoutes = ['/sign-in', '/sign-up']
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : ''
+const API_BASE = process.env.NEXT_PUBLIC_API_URL
+  ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+  : ''
 
-async function checkSession(cookieHeader: string) {
+async function checkSessionWithCookies(cookieHeader: string) {
   if (!API_BASE) return null
   const res = await fetch(`${API_BASE}/auth/session`, {
     method: 'GET',
@@ -21,7 +24,11 @@ async function checkSession(cookieHeader: string) {
   return { res, data }
 }
 
-function splitSetCookie(v: string | null) {
+function joinCookieHeader(list: Array<{ name: string; value: string }>) {
+  return list.map((c) => `${c.name}=${c.value}`).join('; ')
+}
+
+function splitSetCookie(v: string | null): string[] {
   if (!v) return []
   return v.split(/,(?=[^;]+?=)/g)
 }
@@ -31,15 +38,22 @@ export async function middleware(req: NextRequest) {
   const isPrivate = privateRoutes.some((r) => pathname.startsWith(r))
   const isAuth = authRoutes.some((r) => pathname.startsWith(r))
 
-  const accessToken = req.cookies.get('accessToken')?.value
-  const refreshToken = req.cookies.get('refreshToken')?.value
+  const cookieStore = await nextCookies()
+  const all = cookieStore.getAll()
+  const cookieHeader = joinCookieHeader(all)
 
   let authenticated = false
-  let sessionResult: Awaited<ReturnType<typeof checkSession>> | null = null
+  let sessionResult: Awaited<ReturnType<typeof checkSessionWithCookies>> | null =
+    null
 
-  if ((accessToken || refreshToken) && API_BASE) {
-    sessionResult = await checkSession(req.headers.get('cookie') ?? '')
-    authenticated = !!sessionResult && sessionResult.res.status === 200 && !!sessionResult.data
+  const hasTokens =
+    all.some((c) => c.name === 'accessToken') ||
+    all.some((c) => c.name === 'refreshToken')
+
+  if (API_BASE && hasTokens) {
+    sessionResult = await checkSessionWithCookies(cookieHeader)
+    authenticated =
+      !!sessionResult && sessionResult.res.status === 200 && !!sessionResult.data
   }
 
   if (isPrivate && !authenticated) {
@@ -53,8 +67,10 @@ export async function middleware(req: NextRequest) {
     url.pathname = '/'
     const res = NextResponse.redirect(url)
     if (sessionResult) {
-      for (const c of splitSetCookie(sessionResult.res.headers.get('set-cookie'))) {
-        res.headers.append('Set-Cookie', c)
+      for (const header of splitSetCookie(
+        sessionResult.res.headers.get('set-cookie')
+      )) {
+        res.headers.append('Set-Cookie', header)
       }
     }
     return res
@@ -62,8 +78,10 @@ export async function middleware(req: NextRequest) {
 
   const res = NextResponse.next()
   if (sessionResult) {
-    for (const c of splitSetCookie(sessionResult.res.headers.get('set-cookie'))) {
-      res.headers.append('Set-Cookie', c)
+    for (const header of splitSetCookie(
+      sessionResult.res.headers.get('set-cookie')
+    )) {
+      res.headers.append('Set-Cookie', header)
     }
   }
   return res

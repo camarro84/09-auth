@@ -1,39 +1,44 @@
+import { notFound } from 'next/navigation'
 import { fetchNotesServer } from '@/lib/api/serverApi'
-import Notes from './Notes.client'
 import type { NoteListResponse } from '@/types/note'
+import Notes from './Notes.client'
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string[] }>
-  searchParams?: Promise<{ q?: string | string[] }>
-}) {
-  const resolvedParams = await params
-  const resolvedSearch = await searchParams
+const SLUG_TO_TAG: Record<string, string> = {
+  work: 'Work',
+  personal: 'Personal',
+  meeting: 'Meeting',
+  shopping: 'Shopping',
+  todo: 'Todo',
+}
 
-  const tagRaw = resolvedParams?.slug?.[0]
-  const tag = !tagRaw || tagRaw === 'all' ? undefined : tagRaw
-  const qParam = resolvedSearch?.q
-  const query = typeof qParam === 'string' ? qParam : undefined
+type Props = {
+  params: { slug?: string[] }
+  searchParams?: { q?: string | string[]; page?: string | string[] }
+}
 
-  const data = await fetchNotesServer({
-    page: 1,
-    perPage: 12,
-    tag,
-    query,
-  })
+export default async function Page({ params, searchParams }: Props) {
+  const raw = params.slug?.[0]?.toLowerCase() ?? 'all'
+  if (raw !== 'all' && !SLUG_TO_TAG[raw]) return notFound()
 
-  const page = data?.page ?? 1
-  const perPage = data?.perPage ?? 12
-  const total = data?.total ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / perPage))
+  const tag = raw === 'all' ? undefined : SLUG_TO_TAG[raw]
+
+  const qv = searchParams?.q
+  const query = typeof qv === 'string' ? qv : Array.isArray(qv) ? qv[0] : undefined
+  const pv = searchParams?.page
+  const page = Math.max(1, Number(typeof pv === 'string' ? pv : Array.isArray(pv) ? pv[0] : 1) || 1)
+  const perPage = 12
+
+  const data = await fetchNotesServer({ page, perPage, tag, query })
+  if (!data || !data.notes || data.notes.length === 0) return notFound()
+
+  const total = data.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / (data.perPage ?? perPage)))
 
   const initialData: NoteListResponse = {
-    notes: data?.notes ?? [],
-    page,
+    notes: data.notes,
+    page: data.page ?? page,
     totalPages,
   }
 
-  return <Notes initialData={initialData} />
+  return <Notes initialData={initialData} tag={tag} />
 }
