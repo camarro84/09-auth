@@ -11,21 +11,25 @@ const SLUG_TO_TAG: Record<string, string> = {
   todo: 'Todo',
 }
 
-type Props = {
-  params: { slug?: string[] }
-  searchParams?: { q?: string | string[]; page?: string | string[] }
-}
+type Params = { slug?: string[] }
+type SearchParams = { q?: string | string[]; page?: string | string[] }
 
-export default async function Page({ params, searchParams }: Props) {
-  const raw = params.slug?.[0]?.toLowerCase() ?? 'all'
+export default async function Page(props: {
+  params: Promise<Params>
+  searchParams: Promise<SearchParams>
+}) {
+  const { slug } = await props.params
+  const sp = await props.searchParams
+
+  const raw = slug?.[0]?.toLowerCase() ?? 'all'
   if (raw !== 'all' && !SLUG_TO_TAG[raw]) return notFound()
-
   const tag = raw === 'all' ? undefined : SLUG_TO_TAG[raw]
 
-  const qv = searchParams?.q
+  const qv = sp?.q
   const query = typeof qv === 'string' ? qv : Array.isArray(qv) ? qv[0] : undefined
-  const pv = searchParams?.page
-  const page = Math.max(1, Number(typeof pv === 'string' ? pv : Array.isArray(pv) ? pv[0] : 1) || 1)
+  const pv = sp?.page
+  const page =
+    Math.max(1, Number(typeof pv === 'string' ? pv : Array.isArray(pv) ? pv[0] : 1) || 1)
   const perPage = 12
 
   const data = await fetchNotesServer({ page, perPage, tag, query })
