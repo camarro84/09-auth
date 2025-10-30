@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
+import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
 import { fetchNotesServer } from '@/lib/api/serverApi'
-import type { NoteListResponse } from '@/types/note'
 import Notes from './Notes.client'
 
 const SLUG_TO_TAG: Record<string, string> = {
@@ -28,8 +29,7 @@ export default async function Page(props: {
   const qv = sp?.q
   const query = typeof qv === 'string' ? qv : Array.isArray(qv) ? qv[0] : undefined
   const pv = sp?.page
-  const page =
-    Math.max(1, Number(typeof pv === 'string' ? pv : Array.isArray(pv) ? pv[0] : 1) || 1)
+  const page = Math.max(1, Number(typeof pv === 'string' ? pv : Array.isArray(pv) ? pv[0] : 1) || 1)
   const perPage = 12
 
   const data = await fetchNotesServer({ page, perPage, tag, query })
@@ -38,11 +38,21 @@ export default async function Page(props: {
   const total = data.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / (data.perPage ?? perPage)))
 
-  const initialData: NoteListResponse = {
-    notes: data.notes,
-    page: data.page ?? page,
-    totalPages,
-  }
+  const qc = new QueryClient()
+  await qc.prefetchQuery({
+    queryKey: ['notes', { page, search: query ?? '', tag }],
+    queryFn: async () => {
+      return {
+        notes: data.notes,
+        page: data.page ?? page,
+        totalPages,
+      }
+    },
+  })
 
-  return <Notes initialData={initialData} tag={tag} />
+  return (
+    <HydrationBoundary state={dehydrate(qc)}>
+      <Notes />
+    </HydrationBoundary>
+  )
 }

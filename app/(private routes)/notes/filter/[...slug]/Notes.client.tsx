@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import css from '@/components/NotesPage/NotesPage.module.css'
 import SearchBox from '@/components/SearchBox/SearchBox'
@@ -10,32 +11,45 @@ import NoteList from '@/components/NoteList/NoteList'
 import type { NoteListResponse } from '@/types/note'
 import { fetchNotes } from '@/lib/api/clientApi'
 
-type Props = {
-  initialData: NoteListResponse
-  tag?: string
+const MAP: Record<string, string> = {
+  work: 'Work',
+  personal: 'Personal',
+  meeting: 'Meeting',
+  shopping: 'Shopping',
+  todo: 'Todo',
 }
 
-export default function Notes({ initialData, tag }: Props) {
-  const [page, setPage] = useState(initialData.page || 1)
-  const [search, setSearch] = useState('')
+export default function Notes() {
+  const params = useParams<{ slug?: string[] }>()
+  const raw = (params?.slug?.[0] || 'all').toLowerCase()
+  const tag = raw === 'all' ? undefined : MAP[raw]
 
-  const { data, isFetching, isError, error } = useQuery({
-    queryKey: ['notes', { page, search, tag }],
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [debounced, setDebounced] = useState('')
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebounced(search)
+      setPage(1)
+    }, 400)
+    return () => clearTimeout(id)
+  }, [search])
+
+  const qk = useMemo(() => ['notes', { page, search: debounced, tag }] as const, [page, debounced, tag])
+
+  const { data, isFetching, isError, error } = useQuery<NoteListResponse>({
+    queryKey: qk,
     queryFn: async () => {
-      const res = await fetchNotes({ page, perPage: 12, search, tag })
+      const res = await fetchNotes({ page, perPage: 12, search: debounced, tag })
       const total = (res as any).total ?? 0
       const perPage = (res as any).perPage ?? 12
       const totalPages =
         typeof (res as any).totalPages === 'number'
           ? (res as any).totalPages
           : Math.max(1, Math.ceil(total / perPage))
-      return {
-        notes: res.notes ?? [],
-        page: res.page ?? page,
-        totalPages,
-      } as NoteListResponse
+      return { notes: res.notes ?? [], page: res.page ?? page, totalPages }
     },
-    initialData,
   })
 
   const safe = data || { notes: [], page, totalPages: 1 }

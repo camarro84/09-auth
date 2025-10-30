@@ -2,14 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { cookies as nextCookies } from 'next/headers'
 
-const privateRoutes = ['/profile', '/notes']
-const authRoutes = ['/sign-in', '/sign-up']
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : ''
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api`
-  : ''
-
-async function checkSessionWithCookies(cookieHeader: string) {
+async function checkSession(cookieHeader: string) {
   if (!API_BASE) return null
   const res = await fetch(`${API_BASE}/auth/session`, {
     method: 'GET',
@@ -35,25 +30,23 @@ function splitSetCookie(v: string | null): string[] {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
-  const isPrivate = privateRoutes.some((r) => pathname.startsWith(r))
-  const isAuth = authRoutes.some((r) => pathname.startsWith(r))
 
   const cookieStore = await nextCookies()
   const all = cookieStore.getAll()
   const cookieHeader = joinCookieHeader(all)
+  const hasAccess = !!cookieStore.get('accessToken')
+  const hasRefresh = !!cookieStore.get('refreshToken')
+
+  const isPrivate = pathname.startsWith('/profile') || pathname.startsWith('/notes')
+  const isAuth = pathname === '/sign-in' || pathname === '/sign-up'
 
   let authenticated = false
-  let sessionResult: Awaited<ReturnType<typeof checkSessionWithCookies>> | null =
-    null
+  let sessionResult: Awaited<ReturnType<typeof checkSession>> | null = null
 
-  const hasTokens =
-    all.some((c) => c.name === 'accessToken') ||
-    all.some((c) => c.name === 'refreshToken')
-
-  if (API_BASE && hasTokens) {
-    sessionResult = await checkSessionWithCookies(cookieHeader)
-    authenticated =
-      !!sessionResult && sessionResult.res.status === 200 && !!sessionResult.data
+  const shouldCheck = hasAccess || (!hasAccess && hasRefresh)
+  if (API_BASE && shouldCheck) {
+    sessionResult = await checkSession(cookieHeader)
+    authenticated = !!sessionResult && sessionResult.res.status === 200 && !!sessionResult.data
   }
 
   if (isPrivate && !authenticated) {
@@ -67,10 +60,9 @@ export async function middleware(req: NextRequest) {
     url.pathname = '/'
     const res = NextResponse.redirect(url)
     if (sessionResult) {
-      for (const header of splitSetCookie(
-        sessionResult.res.headers.get('set-cookie')
-      )) {
-        res.headers.append('Set-Cookie', header)
+      const headers = sessionResult.res.headers.get('set-cookie')
+      for (const c of splitSetCookie(headers)) {
+        res.headers.append('Set-Cookie', c)
       }
     }
     return res
@@ -78,15 +70,14 @@ export async function middleware(req: NextRequest) {
 
   const res = NextResponse.next()
   if (sessionResult) {
-    for (const header of splitSetCookie(
-      sessionResult.res.headers.get('set-cookie')
-    )) {
-      res.headers.append('Set-Cookie', header)
+    const headers = sessionResult.res.headers.get('set-cookie')
+    for (const c of splitSetCookie(headers)) {
+      res.headers.append('Set-Cookie', c)
     }
   }
   return res
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/).*)'],
+  matcher: ['/profile/:path*', '/notes/:path*', '/sign-in', '/sign-up'],
 }
