@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import css from './SignUpPage.module.css'
-import { register } from '@/lib/api/clientApi'
+import { register, login } from '@/lib/api/clientApi'
 import { useUserStore } from '@/lib/store/authStore'
 
 export default function SignUpPage() {
@@ -22,10 +22,10 @@ export default function SignUpPage() {
       const formData = new FormData(e.currentTarget)
       const email = String(formData.get('email') || '').trim()
       const password = String(formData.get('password') || '').trim()
-      const username = email.split('@')[0] || 'user'
 
       try {
-        const user = await register({ email, password, username })
+        await register({ email, password })
+        const user = await login({ email, password })
         setUser(user)
         router.push('/profile')
       } catch {
